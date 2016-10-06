@@ -1,25 +1,3 @@
-# The MIT License (MIT)
-#
-# Copyright (c) 2016 James K. Pringle
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 """Module for capturing translations from XLSForms
 
 Created: 3 October 2016
@@ -55,17 +33,20 @@ class TranslationDict:
     Attributes:
         data (dict): Data structure described above
         languages (set of str): Keeps track of what languages are included
+
+    Class attributes:
         number_prog (regex): A regex program to detect numbering schemes at the
             beginning of a string. Examples are 'HQ1. ', 'Q. ', '401a. ', and
             'LCL_010. '. Currently (10/5/2016) numbering scheme must end with
             '.', ':', or ')' and then whitespace.
     """
 
+    number_re = r'^\s*([A-Z]|(\S*\d+[a-z]?))[\.:\)]\s*'
+    number_prog = re.compile(number_re)
+
     def __init__(self):
         self.data = {}
         self.languages = set()
-        number_re = r'^\s*([A-Z]|(\S*\d+[a-z]?))[\.:\)]\s+'
-        self.number_prog = re.compile(number_re)
 
     def add_translation(self, eng, other, lang):
         """Add a translation to the dictionary
@@ -79,16 +60,16 @@ class TranslationDict:
             other: String in other language that is a translation of `eng`
             lang: String name of other language
         """
-        eng = self.clean_string(eng)
-        other = self.clean_string(other)
+        cleaned_eng = self.clean_string(eng)
+        cleaned_other = self.clean_string(other)
         try:
-            this_dict = self.data[eng]
+            this_dict = self.data[cleaned_eng]
             if lang in this_dict:
-                this_dict[lang].append(other)
+                this_dict[lang].append(cleaned_other)
             else:
-                this_dict[lang] = [other]
+                this_dict[lang] = [cleaned_other]
         except KeyError:
-            self.data[eng] = {lang: [other]}
+            self.data[cleaned_eng] = {lang: [cleaned_other]}
         self.languages.add(lang)
 
     def get_translation(self, eng, lang):
@@ -187,7 +168,8 @@ class TranslationDict:
                     # Missing information is highlighted
                     ws.write(i + 1, j + 1, '', red_background)
 
-    def split_text(self, s):
+    @staticmethod
+    def split_text(s):
         """Split text into a number and the rest
 
         This splitting is done using the regex attribute `number_prog`.
@@ -200,7 +182,7 @@ class TranslationDict:
             If no number is found with the regex, then `number` is '', the
             empty string.
         """
-        m = self.number_prog.match(s)
+        m = TranslationDict.number_prog.match(s)
         if m:
             number = s[m.span()[0]:m.span()[1]]
             text = s[m.span()[1]:]
@@ -209,7 +191,8 @@ class TranslationDict:
             text = s
         return number, text
 
-    def clean_string(self, s):
+    @staticmethod
+    def clean_string(s):
         """Clean a string for addition into the translation dictionary
 
         Leading and trailing whitespace is removed. Newlines are converted to
@@ -226,7 +209,7 @@ class TranslationDict:
         s = s.replace('\r', '\n')
         s = utils.space_newline_fix(s)
         s = utils.newline_space_fix(s)
-        _, text = self.split_text(s)
+        _, text = TranslationDict.split_text(s)
         return text
 
     def __str__(self):

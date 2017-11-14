@@ -1,122 +1,117 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-import constants
+"""Useful string functions for PMIX."""
 
 import re
-import json
-import unicodedata
 
 
-class TransformRule:
-
-    def __init__(self, params):
-        self.transform = self.determine_transform(params)
-
-    @staticmethod
-    def determine_transform(params):
-        try:
-            transform_type = params[constants.TYPE]
-            if transform_type == constants.STRIP:
-                return lambda x: x.strip()
-            elif transform_type == constants.REPLACE:
-                args = params[constants.ARGS]
-                regex = args[0]
-                replacement = args[1]
-                return lambda x: re.sub(regex, replacement, x)
-            elif transform_type == constants.NORMALIZE:
-                return lambda x: unicodedata.normalize('NFKD', x).encode(
-                    'ascii', 'ignore').decode('ascii')
-            elif transform_type == constants.SUBSTR:
-                args = params[constants.ARGS]
-                if args[0] is None:
-                    start_ind = 0
-                else:
-                    start_ind = args[0]
-                if args[1] is None:
-                    return lambda x: x[start_ind:]
-                else:
-                    end_ind = args[1]
-                    return lambda x: x[start_ind:end_ind]
-            elif transform_type == constants.LOWER:
-                return lambda x: x.lower()
-            else:
-                return id
-        except (KeyError, IndexError):
-            return id
-
-    def apply(self, string):
-        return self.transform(string)
+NUMBER_RE = r"""
+            ^\s*                # Begin with possible whitespace.
+            (
+                [a-zA-Z]        # Start with a letter
+            |
+                (
+                    \S*         # or start with non-whitespace and
+                    \d+         # one or more numbers, then possibly
+                    [.a-z]*     # dots (.) and lower-case letters
+                )
+            )
+            [.:)]               # Always end with one of '.', ':', ')' and
+            \s+                 # finally whitespace
+            """
 
 
-def string_transform(s, rules):
-    for rule in rules:
-        s = rule.apply(s)
-    return s
+# pylint: disable=no-member
+NUMBER_PROG = re.compile(NUMBER_RE, re.VERBOSE)
 
 
-def decode_json(json_text, **kwargs):
-    obj = json.loads(json_text, **kwargs)
-    return obj
+def td_clean_string(text):
+    """Clean a string for a translation dictionary.
+
+    Removes extra whitespace and a number if found.
+
+    Args:
+        text (str): String to be cleaned.
+
+    Returns:
+        String with extra whitespace and leading number (if found) removed.
+    """
+    text = clean_string(text)
+    _, text = td_split_text(text)
+    return text
 
 
-# col should be a zero-indexed integer
-def number_to_excel_column(col):
-    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    if len(letters) * len(letters) < col:
-        raise ValueError(col)
-    remainder = col % len(letters)
-    primary_letter = letters[remainder]
-    quotient = col // len(letters)
-    if quotient > 0:
-        return letters[quotient - 1] + primary_letter
-    else:
-        return primary_letter
+def td_split_text(text):
+    """Split text into a number and the rest.
+
+    This splitting is done using the regex program `NUMBER_PROG`.
+
+    Args:
+        text (str): String to split
+
+    Returns:
+        A tuple `(number, the_rest)`. The original string is `number +
+        the_rest`. If no number is found with the regex, then `number` is
+        '', the empty string.
+    """
+    number = ''
+    the_rest = text
+    if len(text.split()) > 1:
+        match = NUMBER_PROG.match(text)
+        if match:
+            number = text[match.span()[0]:match.span()[1]]
+            the_rest = text[match.span()[1]:]
+    return number, the_rest
 
 
-def write_out_worksheet(ws, lines):
-    for i, line in enumerate(lines):
-        ws.write_row(i, 0, line)
+def clean_string(text):
+    """Clean a string for addition into the translation dictionary.
+
+    Leading and trailing whitespace is removed. Newlines are converted to
+    the UNIX style. Opening number is removed if found by `split_text`.
+
+    Args:
+        text (str): String to be cleaned.
+
+    Returns:
+        A cleaned string with number removed.
+    """
+    text = text.strip()
+    text = text.replace('\r\n', '\n')
+    text = text.replace('\r', '\n')
+    text = space_newline_fix(text)
+    text = newline_space_fix(text)
+    return text
 
 
-def format_header(s):
-    inner_header = " {} "
-    section_header = "{:*^80}"
-    return section_header.format(inner_header.format(s))
+def newline_space_fix(text):
+    """Replace "newline-space" with "newline".
 
+    This function was particularly useful when converting between Google
+    Sheets and .xlsx format.
 
-# important for switching between google docs and xlsx
-def newline_space_fix(s):
+    Args:
+        text (str): The string to work with
+
+    Returns:
+        The text with the appropriate fix.
+    """
     newline_space = '\n '
     fix = '\n'
-    while newline_space in s:
-        s = s.replace(newline_space, fix)
-    return s
+    while newline_space in text:
+        text = text.replace(newline_space, fix)
+    return text
 
 
-def space_newline_fix(s):
+def space_newline_fix(text):
+    """Replace "space-newline" with "newline".
+
+    Args:
+        text (str): The string to work with
+
+    Returns:
+        The text with the appropriate fix.
+    """
     space_newline = ' \n'
     fix = '\n'
-    while space_newline in s:
-        s = s.replace(space_newline, fix)
-    return s
-
-if __name__ == '__main__':
-    text_rules = """
-        [
-            {"TYPE": "STRIP"},
-            {"TYPE": "REPLACE", "ARGS": ["[ ]+","_"]},
-            {"TYPE": "REPLACE", "ARGS": ["[_]+","_"]},
-            {"TYPE": "SUBSTR", "ARGS": [null, 18]},
-            {"TYPE": "STRIP"}
-
-        ]
-    """
-    obj = decode_json(text_rules)
-    print(obj)
-
-    rules = [TransformRule(params) for params in obj]
-
-    strings = [" a b é c ф d ","01234567890123456789012345678901234567890"]
-    for s in strings:
-        print("'{}' -> '{}'".format(s, string_transform(s, rules)))
+    while space_newline in text:
+        text = text.replace(space_newline, fix)
+    return text

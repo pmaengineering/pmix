@@ -1,3 +1,9 @@
+v0.2.2, 7 March 2018
+ * New feature: XlsDiff for comparing Excel forms intelligently
+ * CLI updates to PPP to allow multiple languages and formats
+ * New borrow functionality to handle diverse (multiple) translations
+ * Various numbering and PPP updates
+
 v0.2.1, 14 November 2017
  * Workbook and Xlsform classes for modeling Excel files
  * PPP sub-package to convert an ODK form to PDF and HTML
@@ -6,7 +12,7 @@ v0.2.1, 14 November 2017
  * Added unit tests
 
 v0.2.0, 5 October 2016
- * Renamed package to 'pmix'
+ * Renamed 'qlang' package to 'pmix'
  * Expanded to contain borrow.py, functionality to grab translations
  * Efficiencies from internals: more of an OO-design rather than functional
 

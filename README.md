@@ -86,14 +86,26 @@ examples:
 | --- | --- | --- | --- |
 | Hello! | Bonjour! | ... | <"Hello!" in language *n*\> |
 
+#### Diverse translations
+
+There are a set of command-line options to work with diverse translations.
+
+- `-D` This option, used without argument, means if text has diverse translations, do not borrow it. Only has effect with `-m`
+- `-C CORRECT` This option marks a file as correct. Fill in `CORRECT` with a path to a source file. Its translations are given precedence over others. If there is only one input file, and it is correct, then there is no need to mark it correct because nothing can override it.
+- `d DIVERSE` Give a language found in the forms for `DIVERSE`. This option is used without `-m`. It creates a file with only strings that have diverse translations in the supplied language from the source files.
+
+---
+
 #### The Output File
 A resultant file with merged translations has the following possible highlighting:
 
-![#ffa500](https://placehold.it/15/ffa500/000000?text=+) *Orange* if the source and the translation are the same.  
-![#0000ff](https://placehold.it/15/0000ff/000000?text=+) *Blue* if the new translation changes the old translation.  
-![#00ff00](https://placehold.it/15/00ff00/000000?text=+) *Green* if the translation is not found in the TranslationDict, but there is a pre-existing translation.  
-![#ff0000](https://placehold.it/15/ff0000/000000?text=+) *Red* if translation is not found and there is no pre-existing translation.  
-![#ffffff](https://placehold.it/15/ffffff/000000?text=+) *No highlight* if the translation is the same as the pre-existing translation.
+- ![#ffd3b6](https://placehold.it/15/ffd3b6/000000?text=+) *Orange* if the source and the translation are the same.
+- ![#9acedf](https://placehold.it/15/9acedf/000000?text=+) *Blue* if the new translation changes the old translation.
+- ![#d3d3d3](https://placehold.it/15/d3d3d3/000000?text=+) *Grey* if the new translation fills in a previously missing translation (blank cell).
+- ![#85ca5d](https://placehold.it/15/85ca5d/000000?text=+) *Green* if the translation is not found in the TranslationDict, but there is a pre-existing translation.
+- ![#ffaaa5](https://placehold.it/15/ffaaa5/000000?text=+) *Red* if translation is not found and there is no pre-existing translation.
+- ![#fffa81](https://placehold.it/15/fffa81/000000?text=+) *Yellow* if using the `-D` option, shows strings that have diverse translations without inserting them.
+- ![#ffffff](https://placehold.it/15/ffffff/000000?text=+) *No highlight* if the translation is the same as the pre-existing translation.
 
 ## Cascade
 

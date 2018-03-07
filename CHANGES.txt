@@ -1,4 +1,5 @@
 v0.2.2, 7 March 2018
+ * New feature: XlsDiff for comparing Excel forms intelligently
  * CLI updates to PPP to allow multiple languages and formats
  * New borrow functionality to handle diverse (multiple) translations
  * Various numbering and PPP updates

@@ -15,6 +15,11 @@ without numbering.
     - ~000
     - ~Q300
 
+TODO: Silence any of the other increments by starting with a '~'.
+
+    - ~^1
+    - ~<4
+
 Increment with special strings starting with '^'.
 
     - '^1'
@@ -29,6 +34,10 @@ Keep the same as previous numbers in the same series with the lookback symbol
     - '<'
     - '<3'
 
+Lookbacks can be followed by an increment.
+
+    - '<3^a'
+
 Resume a previous section with the '*' symbol. '*' alone refers to one previous
 
     - '*^1'
@@ -39,12 +48,12 @@ Sticky questions are marked with a '#'.
 
     - '#LCL_101'
 
-Count up to a fixed number with '>'.
+TODO: Count up to a fixed number with '>'.
 
     - '>1'
     - '>A'
 
-...and then a fixed number such as 099.
+...and then a fixed number such as 099 with '>1@099'
 """
 import argparse
 import copy
@@ -115,13 +124,22 @@ class NumberingContext:
 
     def lookback(self, cmd):
         """Parse a lookback command and add the correct number."""
+        increment_pos = cmd.find('^')
+        if increment_pos < 0:
+            increment = ''
+        else:
+            increment = cmd[increment_pos:]
+            cmd = cmd[:increment_pos]
         if cmd == '<':
             lookback = 1
         else:
             lookback = int(cmd[1:])
         new_num = copy.copy(self.current_series_last(lookback))
         new_num.silent = False
+        if increment:
+            new_num.increment(increment)
         self.current_series_add(new_num)
+
 
     def sticky(self, cmd):
         """Parse a sticky number command and add the correct number."""
@@ -145,6 +163,7 @@ class NumberingContext:
             self.parse_cmd(cmd[1:])
         else:
             raise RuntimeError('"*NUM" not yet implemented')
+
     def blank(self):
         """Parse an empty command."""
         self.numbers.append(None)
@@ -284,7 +303,7 @@ class Numbering:
                 self.increase_roman(item)
             elif self.letter and item.isalpha():
                 self.increase_letter(item)
-            elif item.islower(): # and not self.letter
+            elif item.islower():  # and not self.letter
                 self.increase_lower(item)
             else:
                 msg = 'Bad increment "{}". Must be A, 1, a, or i.'.format(cmd)
@@ -334,6 +353,8 @@ class Numbering:
         new_lower = LOWER_LETTERS[cur_index + delta_index]
         self.lower = new_lower
 
+        self.roman = ''
+
     def increase_roman(self, roman):
         """Increase an roman by a specified amount.
 
@@ -354,8 +375,7 @@ class Numbering:
         """Convert to string for use in numbering."""
         if self.silent:
             return ''
-        else:
-            return str(self)
+        return str(self)
 
     def __str__(self):
         """Convert the numbering to a string."""
@@ -373,7 +393,7 @@ class Numbering:
         return 'Numbering("{}")'.format(str(self))
 
 
-def compute_prepend_numbers(inpath, col, outpath):
+def compute_prepend_numbers(inpath, col, outpath, rm_on_empty=False):
     """Compute numbers based on mini-language and prepend to all labels.
 
     This program highlights cells in the following two specific cases:
@@ -391,6 +411,9 @@ def compute_prepend_numbers(inpath, col, outpath):
         inpath (str): The path where to find the source file.
         col (str): The name of the column where to find numbering.
         outpath (str): The path where to write the new xlsxfile.
+        rm_on_empty (bool): Remove numbers that exist when numbering column is
+            blank.
+
     """
     xlsform = Xlsform(inpath)
     survey = xlsform['survey']
@@ -405,12 +428,17 @@ def compute_prepend_numbers(inpath, col, outpath):
                     header_skipped = True
                     continue
                 if num:
-                    cell_num, the_rest = utils.td_split_text(str(cell))
+                    old_text = str(cell)
+                    cell_num, the_rest = utils.td_split_text(old_text)
                     new_text = '. '.join((num, the_rest))
                     cell.value = new_text
                     if not cell_num:
+                        # Highlight yellow for adding a number
                         cell.set_highlight()
-                elif cell:
+                    elif new_text != old_text:
+                        # Highlight orange for changing a number
+                        cell.set_highlight('HL_ORANGE')
+                elif cell and rm_on_empty:
                     cell_num, the_rest = utils.td_split_text(str(cell))
                     if cell_num:
                         cell.value = the_rest
@@ -433,6 +461,10 @@ def numbering_cli():
     out_help = ('Path to write output. If this argument is not supplied, then '
                 'defaults are used.')
     parser.add_argument('-o', '--outpath', help=out_help)
+    rm_help = ('Remove a number that pre-exists in a label if numbering '
+               'column is blank.')
+    parser.add_argument('-r', '--rm_on_empty', action='store_true',
+                        help=rm_help)
     args = parser.parse_args()
 
     col = DEFAULT_NUM_COL

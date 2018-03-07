@@ -66,7 +66,7 @@ def clean_string(text):
     """Clean a string for addition into the translation dictionary.
 
     Leading and trailing whitespace is removed. Newlines are converted to
-    the UNIX style. Opening number is removed if found by `split_text`.
+    the UNIX style.
 
     Args:
         text (str): String to be cleaned.
@@ -79,6 +79,7 @@ def clean_string(text):
     text = text.replace('\r', '\n')
     text = space_newline_fix(text)
     text = newline_space_fix(text)
+    text = space_space_fix(text)
     return text
 
 
@@ -101,6 +102,22 @@ def newline_space_fix(text):
     return text
 
 
+def space_space_fix(text):
+    """Replace "space-space" with "space".
+
+    Args:
+        text (str): The string to work with
+
+    Returns:
+        The text with the appropriate fix.
+    """
+    space_space = '  '
+    space = ' '
+    while space_space in text:
+        text = text.replace(space_space, space)
+    return text
+
+
 def space_newline_fix(text):
     """Replace "space-newline" with "newline".
 
@@ -115,3 +132,46 @@ def space_newline_fix(text):
     while space_newline in text:
         text = text.replace(space_newline, fix)
     return text
+
+
+def show_whitespace(text):
+    """Replace whitespace characters with unicode.
+
+    Args:
+        text (str): The string to work with
+
+    Returns:
+        The text with the whitespace now visible.
+    """
+    text = text.replace('\r\n', '\n')
+    text = text.replace('\r', '\n')
+    # Middle dot
+    text = text.replace(' ', '\u00b7')
+    # Small right triangle
+    text = text.replace('\t', '\u25b8')
+    # Downwards arrow with corner leftwards
+    text = text.replace('\n', '\u21b5')
+    return text
+
+
+def number_to_excel_column(col):
+    """Convert a zero-indexed column number to Excel column name.
+
+    Args:
+        col (int): The column number, e.g. from a Worksheet. Should be
+            zero-indexed
+
+    Returns:
+        str: The Excel column name
+
+    Raises:
+        ValueError: If col > 26*26 or col < 0
+    """
+    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    if len(letters) * len(letters) < col or col < 0:
+        raise ValueError(col)
+    div, mod = divmod(col, len(letters))
+    primary_letter = letters[mod]
+    if div > 0:
+        return letters[div - 1] + primary_letter
+    return primary_letter

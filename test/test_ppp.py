@@ -4,7 +4,9 @@
 import unittest
 import doctest
 import os
+import subprocess
 from argparse import ArgumentParser
+
 from pmix.ppp.odkform import OdkForm
 from pmix.ppp.odkprompt import OdkPrompt
 from pmix.ppp.odkgroup import OdkGroup
@@ -185,65 +187,92 @@ class OdkFormTest(unittest.TestCase, PppTest):
     def setUp(self):
         """Set up."""
         self.data = (
-            ({'file': 'FQ.xlsx', 'position': 0},
-             {'class': OdkGroup,
-              'repr': '<OdkGroup empty_warn_grp: '
-                      '[<OdkPrompt empty_form_warning>, '
-                      '<OdkPrompt ok_continue>]>'}),
-            ({'file': 'FQ.xlsx', 'position': 25},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt school>'}),
-            ({'file': 'FQ.xlsx', 'position': 50},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt children_died_error>'}),
-            ({'file': 'FQ.xlsx', 'position': 75},
-             {'class': OdkPrompt,
-              'repr': '<OdkPrompt more_children_pregnant>'}),
-            ({'file': 'FQ.xlsx', 'position': 100},
-             {'class': OdkPrompt,
-              'repr': '<OdkPrompt injectable_probe_current>'}),
-            ({'file': 'HQ.xlsx', 'position': 0},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt your_name_check>'}),
-            ({'file': 'HQ.xlsx', 'position': 25},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt error_extraheads>'}),
-            ({'file': 'HQ.xlsx', 'position': 50},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt water_months_avail_2>'}),
-            ({'file': 'HQ.xlsx', 'position': 75},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt water_reliability_8>'}),
-            ({'file': 'HQ.xlsx', 'position': 100},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt water_collection_14>'}),
-            ({'file': 'SQ.xlsx', 'position': 0},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt your_name_check>'}),
-            ({'file': 'SQ.xlsx', 'position': 25},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt sect_services_info>'}),
-            ({'file': 'SQ.xlsx', 'position': 50},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt fp_offered>'}),
-            ({'file': 'SQ.xlsx', 'position': 75},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt implant_insert>'}),
-            ({'file': 'SQ.xlsx', 'position': 100},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt stock_implants>'}),
-            ({'file': 'FQ-nut.xlsx', 'position': 0},
-             {'class': OdkGroup,
-              'repr': '<OdkGroup empty_warn_grp: [<OdkPrompt '
-                      'empty_form_warning>, <OdkPrompt ok_continue>]>'}),
-            ({'file': 'FQ-nut.xlsx', 'position': 25},
-             {'class': OdkGroup,
-              'repr': '<OdkGroup FQA: [<OdkPrompt age_warn>, <OdkPrompt '
-                      'age_diff>, <OdkPrompt age_same>, <OdkPrompt age>]>'}),
-            ({'file': 'FQ-nut.xlsx', 'position': 50},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt nb_age_youngest>'}),
-            ({'file': 'FQ-nut.xlsx', 'position': 75},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt ac_bp_check>'}),
-            ({'file': 'FQ-nut.xlsx', 'position': 100},
-             {'class': OdkPrompt, 'repr': '<OdkPrompt over_2yr_warning>'}),
+            {'inputs': {'file': 'OdkFormTest.xlsx'}, 'position': 0,
+             'outputs': {'class': OdkPrompt,
+                         'repr': '<OdkPrompt ever_birth>'}},
+            {'inputs': {'file': 'OdkFormTest.xlsx'}, 'position': 1,
+             'outputs': {'class': OdkGroup,
+                         'repr': '<OdkGroup FB: [<OdkPrompt fb_note>, '
+                                 '<OdkPrompt fb_m>, <OdkPrompt fb_y>]>'}},
+            {'inputs': {'file': 'OdkFormTest.xlsx'}, 'position': 2,
+             'outputs': {'class': OdkPrompt,
+                         'repr': '<OdkPrompt birth_events_yes>'}},
+            {'inputs': {'file': 'OdkFormTest.xlsx'}, 'position': 3,
+             'outputs': {'class': OdkPrompt,
+                         'repr': '<OdkPrompt children_living>'}},
         )
 
     def test_questionnaire(self):
         """Test expected results of converted questionnaire based on position.
         """
         forms = self.get_forms(self.data)
-        for i, expected_output in self.data:
-            output = forms[i['file']].questionnaire[i['position']]
-            self.assertTrue(str(output) == expected_output['repr'])
-            self.assertTrue(isinstance(output, expected_output['class']))
+
+        for datum in self.data:
+            expected_output = datum['outputs']
+            output = \
+                forms[datum['inputs']['file']].questionnaire[datum['position']]
+
+            # - Check Object Representation
+            got = str(output)
+            expected = expected_output['repr']
+            msg = '\nGot: {}\nExpected: {}'.format(got, expected)
+            self.assertEqual(got, expected, msg)
+
+            # - Check Object Class
+            got = output
+            expected = expected_output['class']
+            msg = '\nGot: {}\nExpected: {}'.format(got, expected)
+            # noinspection PyTypeChecker
+            self.assertTrue(isinstance(got, expected), msg)
+
+    def test_to_html(self):
+        """Test to_html method."""
+        forms = self.get_forms(self.data)
+        for dummy, form in forms.items():
+            kwargs = {'format': 'html'}
+            html = form.to_html(**kwargs)
+            self.assertTrue(html.startswith("""<html>\n    <head>"""))
+            self.assertTrue(html.endswith('</html>'))
+            self.assertIn("""    </head>\n    <body id="survey">
+        <div id="container">
+            <div id="identification_section" class="section">""", html)
+
+
+class MultiConversionTest(unittest.TestCase):
+    """Test conversion of n files in n languages for n option combinations."""
+
+    def test_multi_conversion(self):
+        src_dir = TEST_FILES_DIR + 'multiple_file_language_option_conversion/'
+        out_dir = src_dir + 'ignored/'
+        src_dir_ls_input = os.listdir(src_dir)
+        src_files = \
+            [src_dir + x for x in src_dir_ls_input if x.endswith('.xlsx')]
+        subprocess.call(['rm', '-rf', out_dir])
+        os.makedirs(out_dir)
+        command = ['python', '-m', 'pmix.ppp'] + src_files + \
+                  ['-o', out_dir, '-f', 'doc', 'html', '-p', 'minimal', 'full', '-l',
+                   'English', 'Français']
+        subprocess.call(command)
+
+        out_dir_ls_input = str(os.listdir(out_dir))
+        expected_output = \
+            str(['BFR5-Selection-v2-jef-Français-minimal.html',
+                 'BFR5-Female-Questionnaire-v13-jef-Français-full.html',
+                 'BFR5-Female-Questionnaire-v13-jef-English-minimal.doc',
+                 'BFR5-Female-Questionnaire-v13-jef-Français-full.doc',
+                 'BFR5-Selection-v2-jef-Français-full.html',
+                 'BFR5-Female-Questionnaire-v13-jef-English-full.doc',
+                 'BFR5-Female-Questionnaire-v13-jef-Français-minimal.html',
+                 'BFR5-Selection-v2-jef-Français-full.doc',
+                 'BFR5-Female-Questionnaire-v13-jef-Français-minimal.doc',
+                 'BFR5-Female-Questionnaire-v13-jef-English-full.html',
+                 'BFR5-Selection-v2-jef-English-minimal.doc',
+                 'BFR5-Selection-v2-jef-English-minimal.html',
+                 'BFR5-Female-Questionnaire-v13-jef-English-minimal.html',
+                 'BFR5-Selection-v2-jef-Français-minimal.doc',
+                 'BFR5-Selection-v2-jef-English-full.doc',
+                 'BFR5-Selection-v2-jef-English-full.html'])
+        self.assertEqual(expected_output, str(out_dir_ls_input))
 
 
 def get_args():

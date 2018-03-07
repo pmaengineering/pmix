@@ -17,8 +17,20 @@ MEDIA_FIELDS = ('image', 'media::image', 'audio', 'media::audio',
 LANGUAGE_DEPENDENT_FIELDS = \
     ('label', 'hint', 'constraint_message', 'ppp_input') + MEDIA_FIELDS
 TRUNCATABLE_FIELDS = ('constraint', 'relevant')
+MULTI_ARGUMENT_CONVERSION_OPTIONS = ('preset', 'format', 'language')
 PRESETS = {
-    'developer': {
+    'full': {  # Alias for 'developer'.
+        'field_replacements': (),
+        'field_exclusions': (),
+        'other_specific_exclusions': (),
+        'general_exclusions': False,
+        'render_settings': {
+            'html': {
+                'side_letters': True
+            }
+        }
+    },
+    'developer': {  # Alias for 'full'.
         'field_replacements': (),
         'field_exclusions': (),
         'other_specific_exclusions': (),

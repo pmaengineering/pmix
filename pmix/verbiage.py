@@ -27,12 +27,6 @@ class TranslationDict:
 
     This class is essentially a wrapper around a dictionary with insert and
     lookup functions depending on a key and a language.
-
-    Class attributes:
-        number_prog (regex): A regex program to detect numbering schemes at the
-            beginning of a string. Examples are 'HQ1. ', 'Q. ', '401a. ', and
-            'LCL_010. '. Currently (10/5/2016) numbering scheme must end with
-            '.', ':', or ')' and then possibly whitespace.
     """
 
     def __init__(self, src=None, base='English'):
@@ -44,14 +38,17 @@ class TranslationDict:
 
         Attributes:
             data (dict): Data structure described above
-            languages (set of str): Keeps track of what languages are included
+            correct (set): A set of base language keys in data that are
+                considered correct
+            base (str): The base language
         """
         self.data = {}
+        self.correct = set()
         self.base = base
         if src:
             self.extract_translations(src)
 
-    def extract_translations(self, obj):
+    def extract_translations(self, obj, correct=False):
         """Get translations from an object.
 
         This method determines the type that the object is, and then
@@ -59,19 +56,21 @@ class TranslationDict:
 
         Args:
             obj: A source object, either Xlsform or Workbook
+            correct (bool): Whether or not the input file is treated as correct.
         """
         if isinstance(obj, pmix.xlsform.Xlsform):
-            self.translations_from_xlsform(obj)
+            self.translations_from_xlsform(obj, correct)
         elif isinstance(obj, pmix.workbook.Workbook):
-            self.translations_from_workbook(obj)
+            self.translations_from_workbook(obj, correct)
 
-    def translations_from_xlsform(self, xlsform):
+    def translations_from_xlsform(self, xlsform, correct=False):
         """Get translations from an Xlsform object.
 
         This uses the Xlsform's lazy_translation_pairs method.
 
         Args:
             xlsform (Xlsform): The Xlsform object to get translations from.
+            correct (bool): Whether or not the input file is treated as correct.
         """
         for xlstab in xlsform:
             for pair in xlstab.lazy_translation_pairs(base=self.base):
@@ -84,9 +83,9 @@ class TranslationDict:
                 language = second['language']
                 second['file'] = xlsform.file
                 second['sheet'] = xlstab.name
-                self.add_translation(src, second, language)
+                self.add_translation(src, second, language, correct)
 
-    def translations_from_workbook(self, workbook):
+    def translations_from_workbook(self, workbook, correct=False):
         """Get translations from a workbook object.
 
         Probably should not be used; it is considered deprecated.
@@ -112,12 +111,12 @@ class TranslationDict:
                     lang = second_cell.header
                     second['file'] = workbook.file
                     second['sheet'] = worksheet.name
-                    self.add_translation(src, second, lang)
+                    self.add_translation(src, second, lang, correct)
             except ValueError:
                 # TODO: possibly match text::English to other columns
                 pass
 
-    def add_translation(self, src, other, lang):
+    def add_translation(self, src, other, lang, correct=False):
         """Add a translation to the dictionary.
 
         Many strings to be added come from questionnaires where a numbering
@@ -131,10 +130,20 @@ class TranslationDict:
             other (dict): A dictionary containing the CellData namedtuple and
                 other metadata.
             lang (str): String name of other language
+            correct (bool): Whether or not the input file is treated as correct.
         """
         cleaned_src = utils.td_clean_string(src)
         cleaned_other = utils.td_clean_string(str(other['cell']))
         other['translation'] = cleaned_other
+        if not correct and cleaned_src in self.correct:
+            # Currently not a correct translation, but we have correct
+            return
+        elif correct and cleaned_src not in self.correct and cleaned_src in \
+                self.data:
+            # Remove the old, non-correct translation
+            self.data.pop(cleaned_src, None)
+        if correct:
+            self.correct.add(cleaned_src)
         try:
             this_dict = self.data[cleaned_src]
             if lang in this_dict:
@@ -174,6 +183,63 @@ class TranslationDict:
                           max_count))
         return first_max
 
+    def count_unique_translations(self, src, lang):
+        """Count the translations for a given key in the given language.
+
+        Args:
+            src (str): The text that is translated
+            lang (str): The language in which it is translated
+
+        Returns:
+            An integer of how many translations are found for the given source
+            text
+        """
+        # Set the default return value to 0
+        count_unique = 0
+        # Clean source text
+        cleaned_src = utils.td_clean_string(src)
+        # If the text key is in translations
+        if cleaned_src in self.data:
+            # Get all translations for a given key
+            all_src_data = self.data[cleaned_src]
+            # If the language is among the translations
+            if lang in all_src_data:
+                # Collect all the unique translation strings
+                translations = all_src_data[lang]
+                all_found = [other['translation'] for other in translations]
+                unique_all_found = set(all_found)
+                # Set the return value to the size of the set
+                count_unique = len(unique_all_found)
+        return count_unique
+
+    def get_unique_translations(self, src, lang):
+        """Return the unique translations for a given text in a given language.
+
+        Args:
+            src (str): The text that is translated
+            lang (str): The language in which it is translated
+
+        Returns:
+            A list of sorted, unique translations
+        """
+        # Set the default return value to an empty list
+        unique = []
+        # Clean source text
+        cleaned_src = utils.td_clean_string(src)
+        # If the text key is in translations
+        if cleaned_src in self.data:
+            # Get all translations for a given key
+            all_src_data = self.data[cleaned_src]
+            # If the language is among the translations
+            if lang in all_src_data:
+                # Collect all the unique translation strings
+                translations = all_src_data[lang]
+                all_found = [other['translation'] for other in translations]
+                unique_all_found = set(all_found)
+                # Set the return value to the size of the set
+                unique = sorted(list(unique_all_found))
+        return unique
+
     def get_numbered_translation(self, src, lang):
         """Return a translation for a source string, respecting numbering.
 
@@ -190,8 +256,8 @@ class TranslationDict:
             string also has the same numbering as `src`.
         """
         number, _ = utils.td_split_text(src)
-        src = utils.td_clean_string(src)
-        clean_translation = self.get_translation(src, lang)
+        cleaned_src = utils.td_clean_string(src)
+        clean_translation = self.get_translation(cleaned_src, lang)
         numbered_translation = number + clean_translation
         return numbered_translation
 
@@ -251,7 +317,8 @@ class TranslationDict:
             for other in others:
                 if other not in all_languages:
                     all_languages.append(other)
-        ws.write_row(0, 0, all_languages)
+        header_row = ['text::{}'.format(lang) for lang in all_languages]
+        ws.write_row(0, 0, header_row)
         for i, k in enumerate(self.data):
             ws.write(i + 1, 0, k)
             for j, lang in enumerate(other_languages):
@@ -261,6 +328,33 @@ class TranslationDict:
                 except KeyError:
                     # Missing information is highlighted
                     ws.write(i + 1, j + 1, '', red_background)
+
+    def write_diverse_excel(self, path, language):
+        """Write translation duplicate data to an Excel spreadsheet.
+
+        Args:
+            path (str): String path to write the MS-Excel file
+            language (str): The language to find duplicates
+        """
+        wb = xlsxwriter.Workbook(path)
+        red_background = wb.add_format()
+        red_background.set_bg_color('#FFAAA5')
+        ws = wb.add_worksheet('translations')
+        all_languages = [self.base, language]
+        header_row = ['text::{}'.format(lang) for lang in all_languages]
+        ws.write_row(0, 0, header_row)
+        dups = []
+        for key in self.data:
+            found = self.get_unique_translations(key, language)
+            if len(found) > 1:
+                dups.append((key, found))
+        for i, item in enumerate(dups):
+            ws.write(i + 1, 0, item[0])
+            for j, translation in enumerate(item[1]):
+                if j == 0:
+                    ws.write(i + 1, j + 1, translation)
+                else:
+                    ws.write(i + 1, j + 1, translation, red_background)
 
     def __str__(self):
         """Return a string representation of the data."""

@@ -3,6 +3,7 @@ import os.path
 
 from pmix.ppp.config import TEMPLATE_ENV
 from pmix.ppp.definitions.error import OdkFormError
+from pmix.ppp.odkcalculate import OdkCalculate
 from pmix.ppp.odkchoices import OdkChoices
 from pmix.ppp.odkgroup import OdkGroup
 from pmix.ppp.odkprompt import OdkPrompt
@@ -129,9 +130,11 @@ class OdkForm:
         try:
             choices = wb[ws]
             header = [str(x) for x in choices[0]]
+
             if 'list_name' not in header:
                 msg = 'Column "list_name" not found in {} tab'.format(ws)
                 raise OdkFormError(msg)
+
             for i, row in enumerate(choices):
                 if i == 0:
                     continue
@@ -143,7 +146,7 @@ class OdkForm:
                     odkchoices = OdkChoices(list_name)
                     odkchoices.add(dict_row)
                     formatted_choices[list_name] = odkchoices
-        except KeyError:  # Worksheet does not exist.
+        except (KeyError, IndexError):  # Worksheet does not exist.
             pass
         return formatted_choices
 
@@ -307,7 +310,7 @@ class OdkForm:
 
         Args:
             row (dict): A row as a dictionary. Keys and values are strings.
-            choices (dict): A dictionary with list_names as keys. Represents
+            choices (dict): A diction   ary with list_names as keys. Represents
                 the choices found in 'choices' tab.
             ext_choices (dict): A dictionary with list_names as keys.
                 Represents choices found in 'external_choices' tab.
@@ -322,22 +325,24 @@ class OdkForm:
         simple_row = {'token_type': 'prompt'}
         simple_type = 'select_one'
         row_type = row['type']
-        if row_type.startswith('select_one_external '):
-            list_name = row_type.split(maxsplit=1)[1]
-            choice_list = ext_choices[list_name]
-        elif row_type.startswith('select_multiple_external '):
-            simple_type = 'select_multiple'
-            list_name = row_type.split(maxsplit=1)[1]
-            choice_list = ext_choices[list_name]
-        elif row_type.startswith('select_one '):
-            list_name = row_type.split(maxsplit=1)[1]
-            choice_list = choices[list_name]
-        elif row_type.startswith('select_multiple '):
-            simple_type = 'select_multiple'
-            list_name = row_type.split(maxsplit=1)[1]
-            choice_list = choices[list_name]
-        else:
-            raise OdkFormError()
+        list_name = row_type.split(maxsplit=1)[1]
+
+        try:
+            if row_type.startswith('select_one_external '):
+                choice_list = ext_choices[list_name]
+            elif row_type.startswith('select_multiple_external '):
+                simple_type = 'select_multiple'
+                choice_list = ext_choices[list_name]
+
+            elif row_type.startswith('select_one '):
+                choice_list = choices[list_name]
+            elif row_type.startswith('select_multiple '):
+                simple_type = 'select_multiple'
+                choice_list = choices[list_name]
+            else:
+                raise OdkFormError()
+        except KeyError:
+            raise OdkFormError('List \'{}\' not found.'.format(list_name))
 
         simple_row['simple_type'] = simple_type
         simple_row['choice_list'] = choice_list
@@ -393,6 +398,14 @@ class OdkForm:
         return simple_row
 
     @staticmethod
+    def make_simple_calculate():
+        """Make a simple calculate."""
+        simple_row = {
+            'token_type': 'calculate'
+        }
+        return simple_row
+
+    @staticmethod
     def parse_type(row, choices, ext_choices):
         """Describe the 'type' column of a row XLSForm.
 
@@ -410,6 +423,8 @@ class OdkForm:
         simple_types = OdkPrompt.response_types + OdkPrompt.non_response_types
         if row_type in simple_types:
             simple_row = OdkForm.make_simple_prompt(row_type)
+        elif row_type == 'calculate':
+            simple_row = OdkForm.make_simple_calculate()
         elif row_type.startswith('select_'):
             simple_row = OdkForm.parse_select_type(row, choices, ext_choices)
         elif row_type.startswith('begin ') or row_type.startswith('end '):
@@ -418,6 +433,7 @@ class OdkForm:
             simple_row = {'token_type': 'unhandled', 'simple_type': row_type}
         return simple_row
 
+    # pylint: disable=too-many-branches
     @staticmethod
     def convert_survey(wb, choices, ext_choices):
         """Convert rows and strings of a workbook into object components.
@@ -425,6 +441,7 @@ class OdkForm:
         Main types are:
 
         - prompt
+        - calculate
         - begin group
         - end group
         - begin repeat
@@ -445,10 +462,14 @@ class OdkForm:
                 names, and groups nested within a field-list group.
         """
         context = OdkForm.ConversionContext()
+        survey, header = None, None
         try:
             survey = wb['survey']
             header = survey[0]
+        except KeyError:  # No survey found.
+            pass
 
+        if survey and header:
             for i, row in enumerate(survey):
                 if i == 0:
                     continue
@@ -460,6 +481,9 @@ class OdkForm:
                     choice_list = token['choice_list']
                     this_prompt = OdkPrompt(dict_row, choice_list)
                     context.add_prompt(this_prompt)
+                elif token['token_type'] == 'calculate':
+                    this_calculate = OdkCalculate(dict_row)
+                    context.add_calculate(this_calculate)
                 elif token['token_type'] == 'begin group':
                     this_group = OdkGroup(dict_row)
                     context.add_group(this_group)
@@ -485,8 +509,7 @@ class OdkForm:
                 else:
                     # TODO: Make an error?
                     pass
-        except KeyError:  # No survey found.
-            pass
+
         return context.result
 
     class ConversionContext:
@@ -517,13 +540,25 @@ class OdkForm:
             otherwise it is added to the list of components.
 
             Args:
-                prompt (OdkPrompt): A prompt to add.
+                prompt (OdkPrompt | OdkCalculate): A prompt to add.
 
             """
             if self.pending_stack:
                 self.pending_stack[-1].add(prompt)
             else:
                 self.result.append(prompt)
+
+        def add_calculate(self, calculate):
+            """Add a calculate to the questionnaire.
+
+            If there is an item on the pending stack, it is added there,
+            otherwise it is added to the list of components.
+
+            Args:
+                calculate (OdkCalculate): A calculate to add.
+
+            """
+            self.add_prompt(calculate)
 
         def add_group(self, group):
             """Add a group to the pending stack.

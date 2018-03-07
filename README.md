@@ -163,11 +163,14 @@ PPP also exists on the web!
 | -p  | --preset | Select from a preset of bundled options. The 'developer' preset renders a form that is the most similar to the original XlsForm. The 'internal' preset is more human readable but is not stripped of sensitive information. The 'public' option is like the 'internal' option, only with sensitive information removed. Option usage: `-p {public,internal,developer,minimal}`.
 
 ##### Example Usage
-Print HTML converted XlsForm with default settings to the console:
-`python -m  pmix.ppp myXlsForm.xlsx`
+> `python -m  pmix.ppp myXlsForm.xlsx`  
+> *Prints HTML converted XlsForm with default settings to the console*
+  
+> `python -m  pmix.ppp myXlsForm.xlsx -l Français -f doc -p minimal > myXlsForm.doc`  
+> *Converts an ODK Excel file to a MS Word-readable .doc file (is really HTML under the hood), with the preset of "minimal", and the language set to French*
 
-Convert an ODK Excel file to a MS Word-readable .doc file (is really HTML under the hood), with the preset of "minimal", and the language set to French:
-`python -m  pmix.ppp myXlsForm.xlsx -l Français -f doc -p minimal > myXlsForm.doc`
+> `python -m pmix.ppp myXlsForm1.xlsx myXlsForm2.xlsx -l Luganda Lusoga English -f doc pdf -p minimal full`
+> *Saves a document for every combination of forms and options passed, in this case **2** input files \* **3** languages \* **2** file formats \* **2** detail formats, or **24** output files*
 
 ## Workbook
 
@@ -192,12 +195,12 @@ A utility for showing the differences between two Excel files.
 python3 -m pmix.xlsdiff FILE1 FILE2 --excel
 ```
 
-The above command creates a new Excel file, highlighting `FILE2` to show differences.
-Highlighting significance is as follows:
+The above command creates a new Excel file, creating a new version of `FILE2` 
+with highlighting to show differences.
 
 ![#ff0000](https://placehold.it/15/ff0000/000000?text=+) *Red* -- Rows and columns that are duplicate so are not compared  
-![#ffa500](https://placehold.it/15/ffa500/000000?text=+) *Orange* -- Rows and columns that are in the marked up file, but not in the other  
-![#ffff00](https://placehold.it/15/ffff00/000000?text=+) *Yellow* -- Cells that are different between the the two files  
+![#FFD3B9](https://placehold.it/15/FFD3B9/000000?text=+) *Orange/Peach* -- Rows and columns that are in the marked up file (`FILE2`), but not in the other  
+![#FFF78E](https://placehold.it/15/FFF78E/000000?text=+) *Light Yellow* -- Cells that are different between the the two files  
 ![#00ff00](https://placehold.it/15/00ff00/000000?text=+) *Green* -- Rows that are in a changed order  
 
 ![XlsDiff](docs/xlsdiff_output.png)

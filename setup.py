@@ -18,15 +18,6 @@ setup(
     },
     package_data={
         'pmix.test': ['files/*.xlsx'],
-        'pmix.ppp': [
-            'templates/*.html',
-            'templates/content/*.html',
-            'templates/content/group/*.html',
-            'templates/content/prompt/*.html',
-            'templates/content/prompt/inputs/*.html',
-            'templates/content/repeat/*.html',
-            'templates/content/table/*.html'
-        ]
     },
     license='LICENSE.txt',
     description='Smattering of Python3 tools for PMA workflow',
@@ -34,6 +25,5 @@ setup(
     install_requires=[
         'XlsxWriter>=0.7.0',
         'xlrd>=0.9.3',
-        'Jinja2>=2.9.6'
     ],
 )

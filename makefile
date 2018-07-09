@@ -3,7 +3,7 @@ SRC=./pmix/
 TEST=./test/
 
 
-.PHONY: lint tags ltags test all lint_all codestyle docstyle lint_src lint_test doctest doc docs code linters_all code_src code_test doc_src doc_test
+.PHONY: lint tags ltags test all lint_all codestyle docstyle lint_src lint_test doctest doc docs code linters_all code_src code_test doc_src doc_test build dist pypi_push_test pypi_push pypi_test pip_test pypi pip
 
 # Batched Commands
 all: linters_all test_all
@@ -67,3 +67,16 @@ testdoc:
 	${PYTHON} -m test.test --doctests-only
 
 test_all: test testdoc
+
+# Package Management
+build:
+	rm -rf ./dist && rm -rf ./build && ${PYTHON} setup.py sdist bdist_wheel
+dist: build
+pypi_push_test:
+	make build && twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+pypi_push:
+	make build && twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
+pypi_test: pypi_push_test
+pip_test: pypi_push_test
+pypi: pypi_push
+pip: pypi_push

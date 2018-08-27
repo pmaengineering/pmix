@@ -1,3 +1,7 @@
+v0.2.3, 27 August 2018
+ * Removed PPP and broke into its own package
+ * Improve borrow CLI
+
 v0.2.2, 7 March 2018
  * New feature: XlsDiff for comparing Excel forms intelligently
  * CLI updates to PPP to allow multiple languages and formats

@@ -3,7 +3,7 @@ SRC=./pmix/
 TEST=./test/
 
 
-.PHONY: lint tags ltags test all lint_all codestyle docstyle server serve lint_src lint_test doctest doc docs code linters_all code_src code_test doc_src doc_test paper
+.PHONY: lint tags ltags test all lint_all codestyle docstyle lint_src lint_test doctest doc docs code linters_all code_src code_test doc_src doc_test
 
 # Batched Commands
 all: linters_all test_all
@@ -67,19 +67,3 @@ testdoc:
 	${PYTHON} -m test.test --doctests-only
 
 test_all: test testdoc
-
-
-# SERVER MANAGEMENT
-ssh:
-	ssh root@192.155.80.11
-
-
-
-# Application Management
-serve:server
-server:
-	gunicorn pmaapi.__main__:APP
-
-# Scripts
-paper:
-	sh ./scripts/generic_paper_questionnaires.sh

@@ -8,6 +8,30 @@ import pmix.workbook
 import pmix.xlsform
 
 
+LOG = logging.getLogger('pmix.verbiage')
+
+
+class TranslationSession:
+    """Manage warnings in a session."""
+
+    def __init__(self):
+        """Create a new session."""
+        self.multiples = set()
+
+    def multiple_translations(self, text, language, found):
+        """Warn about multiple translations."""
+        if (text, language) not in self.multiples:
+            self.multiples.add((text, language))
+            msg = '"{}" has {} translations in "{}" language: {}'
+            sorted_found = sorted(found)
+            msg = msg.format(text, len(found), language, sorted_found)
+            LOG.warning(msg)
+
+    def reset(self):
+        """Reset the session."""
+        self.multiples.clear()
+
+
 class TranslationDict:
     """Store translations with a base source into any foreign language.
 
@@ -45,6 +69,7 @@ class TranslationDict:
         self.data = {}
         self.correct = set()
         self.base = base
+        self.session = TranslationSession()
         if src:
             self.extract_translations(src)
 
@@ -174,10 +199,7 @@ class TranslationDict:
         all_found = [other['translation'] for other in all_found_data]
         unique_all_found = set(all_found)
         if len(unique_all_found) > 1:
-            msg = '"{}" has {} translations {}'
-            sorted_all_found = sorted(unique_all_found)
-            msg = msg.format(src, len(unique_all_found), sorted_all_found)
-            logging.warning(msg)
+            self.session.multiple_translations(src, lang, unique_all_found)
         max_count = max((all_found.count(s) for s in unique_all_found))
         first_max = next((s for s in all_found if all_found.count(s) ==
                           max_count))

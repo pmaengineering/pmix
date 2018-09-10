@@ -12,7 +12,6 @@ class Cell:
         Attributes:
             value: A python object that is stored in the cell. Should be
                 castable as str.
-            highlight: The highlight color for this cell.
 
         Args:
             value: The value of the cell. Defaults to None for a blank cell.
@@ -118,8 +117,7 @@ class Cell:
         elif cell.ctype == xlrd.XL_CELL_DATE:
             value = Cell.parse_datetime(cell.value, datemode)
         elif cell.ctype == xlrd.XL_CELL_ERROR:
-            msg = 'Error cell found. Please correct or erase error cell from '\
-                  'file and try again.\n\nError cells are likely to be one of'\
+            msg = 'Error cell found. Likely to be one of'\
                   ' the following: #N/A, #NULL!, #DIV/0!, #VALUE!, #REF!, ' \
                   '#NAME?, #NUM!, #GETTING_DATA'
             raise TypeError(msg)

@@ -80,8 +80,8 @@ class Worksheet:
                     cell = Cell.from_cell(c, datemode, stripstr)
                 except TypeError as err:
                     cell = Cell()
-                    print('\nWarning in row {}: {}'
-                          .format(str(i + 1), str(err)))
+                    print(
+                        '\nWarning in row {}: {}'.format(str(i + 1), str(err)))
                 cur_row.append(cell)
             # try:
             #     cur_row = [Cell.from_cell(c, datemode, stripstr) for c in

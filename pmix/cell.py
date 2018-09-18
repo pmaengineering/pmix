@@ -3,28 +3,60 @@ import datetime
 import xlrd
 
 
+class CellError:
+    """An Excel cell error.
+
+    Instance attributes:
+        value (integer): The Excel internal value of the error
+        error_text (str): The display text of the error
+    """
+
+    def __init__(self, value):
+        """Initialize with a specific internal error value.
+
+        Args:
+            value (integer): An Excel internal error value.
+        """
+        self.value = value
+        self.error_text = xlrd.error_text_from_code[value]
+
+    def __str__(self):
+        """Convert an error to be displayed in output.
+
+        We ignore errors because they do not add useful information.
+        """
+        return ''
+
+    def __repr__(self):
+        """Get a representation of this object."""
+        return f'CellError({self.value})'
+
+
 class Cell:
-    """Representative class for spreadsheet cell."""
+    """Representative class for spreadsheet cell.
+
+    Instance attributes:
+        value: A python object that is stored in the cell. Should be
+            castable as str.
+        highlight (str): The highlight color for this cell.
+    """
 
     def __init__(self, value=None):
         """Initialize cell to have value as Python object.
-
-        Attributes:
-            value: A python object that is stored in the cell. Should be
-                castable as str.
-            highlight: The highlight color for this cell.
 
         Args:
             value: The value of the cell. Defaults to None for a blank cell.
         """
         self.value = value
         self.highlight = None
-        # TODO: More extensive formatting. For now, just support highlight
-        # self.formatting = set()
 
     def is_blank(self):
         """Test whether cell is blank."""
-        return self.value is None or self.value == ''
+        return str(self) == ''
+
+    def is_error(self):
+        """Test wheter cell is an error."""
+        return isinstance(self.value, CellError)
 
     def equals(self, other, whitespace=True):
         """Return string equality of the two cells.
@@ -84,9 +116,8 @@ class Cell:
         Returns:
             An intialized cell object.
         """
-        value = cls.cell_value(cell, datemode, stripstr)
-        new_cell = cls(value)
-        return new_cell
+        cell_value = cls.cell_value(cell, datemode, stripstr)
+        return cls(cell_value)
 
     @staticmethod
     def cell_value(cell, datemode=None, stripstr=True):
@@ -98,7 +129,7 @@ class Cell:
             stripstr (bool): Remove trailing / leading whitespace from text?
 
         Returns:
-            The python object represented by this cell.
+            value (str): The python object represented by this cell.
         """
         value = None
         if cell.ctype == xlrd.XL_CELL_BOOLEAN:
@@ -118,14 +149,10 @@ class Cell:
         elif cell.ctype == xlrd.XL_CELL_DATE:
             value = Cell.parse_datetime(cell.value, datemode)
         elif cell.ctype == xlrd.XL_CELL_ERROR:
-            msg = 'Error cell found. Please correct or erase error cell from '\
-                  'file and try again.\n\nError cells are likely to be one of'\
-                  ' the following: #N/A, #NULL!, #DIV/0!, #VALUE!, #REF!, ' \
-                  '#NAME?, #NUM!, #GETTING_DATA'
-            raise TypeError(msg)
+            value = CellError(cell.value)
         else:
-            msg = 'Unhandled cell exception.\nType: {}\nValue: {}'\
-                .format(cell.ctype, cell.value)
+            msg = 'Unhandled cell found!\nType: {}\nValue: {}'
+            msg = msg.format(cell.ctype, cell.value)
             raise TypeError(msg)
         return value
 

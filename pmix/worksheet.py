@@ -1,8 +1,10 @@
 """Module for Worksheet class."""
+from collections import defaultdict
 import csv
 
 from pmix.cell import Cell
 from pmix.error import SpreadsheetError
+from pmix.utils import number_to_excel_column
 
 
 class Worksheet:
@@ -70,17 +72,23 @@ class Worksheet:
             stripstr (bool): Remove trailing / leading whitespace from text?
 
         Returns:
-            An initialized Worksheet object
+            Worksheet: An initialized Worksheet object
         """
         worksheet = cls(name=sheet.name)
         for i in range(sheet.nrows):
-            try:
-                cur_row = [Cell.from_cell(c, datemode, stripstr) for c in
-                           sheet.row(i)]
-                worksheet.data.append(cur_row)
-            except TypeError as err:
-                msg = 'Error in row {}: {}'.format(str(i+1), str(err))
-                raise TypeError(msg)
+            cur_row = []
+            for j, col in enumerate(sheet.row(i)):
+                try:
+                    cell = Cell.from_cell(col, datemode, stripstr)
+                except TypeError as err:
+                    new_msg = 'Error sheet {} in cell {}{}: {}'
+                    excel_row = i + 1
+                    col_letter = number_to_excel_column(j)
+                    new_msg = new_msg.format(sheet.name, col_letter, excel_row,
+                                             str(err))
+                    raise TypeError(new_msg)
+                cur_row.append(cell)
+            worksheet.data.append(cur_row)
         return worksheet
 
     def prepend_row(self, row=None):
@@ -265,6 +273,22 @@ class Worksheet:
         """Iterate over the cells of a worksheet."""
         for row in self:
             yield from row
+
+    def get_excel_errors(self):
+        """Get all Excel errors in this worksheet.
+
+        Returns:
+            A dictionary with error text as keys and values as lists of cell
+            locations.
+        """
+        errors = defaultdict(list)
+        for i, row in enumerate(self):
+            for j, cell in enumerate(row):
+                if cell.is_error():
+                    error_text = cell.value.error_text
+                    location = f'{number_to_excel_column(j)}{i+1}'
+                    errors[error_text].append(location)
+        return errors
 
     def __iter__(self):
         """Return an iterator on the rows of this Worksheet."""

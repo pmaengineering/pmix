@@ -34,7 +34,7 @@ from collections import defaultdict, Counter, namedtuple
 import difflib
 import os.path
 
-import pmix.utils as utils
+from pmix import utils
 import pmix.workbook
 
 
@@ -238,6 +238,7 @@ class XlsDiff:
             new_seq = list(zip(*new_iters))
         return indexed_venn(base_seq, new_seq)
 
+    # pylint: disable=too-many-locals
     def _find_cell_diffs(self, base_sheet, new_sheet):
         """Find cell differences between two sheets.
 
@@ -265,7 +266,7 @@ class XlsDiff:
                                       new_row, new_col, row[1], col[1])
                     self.cell_diff[sheet_name].append(record)
 
-    def write_diff_new(self, path, copy=False):
+    def write_diff(self, path):
         """Highlight the differences on the new spreadsheet and write out.
 
         The higlighting is as follows:
@@ -279,12 +280,15 @@ class XlsDiff:
             copy (bool): Make a copy of the files first? Highlighting modifies
                 the original workbook
         """
-        if copy:
-            self = self.copy()
+        diff = self.copy()
+        diff.highlight_all()
+        diff.new.write_out(path)
+
+    def highlight_all(self):
+        """Make all highlights for the diff."""
         self._highlight_cols_new()
         self._highlight_rows_new()
         self._highlight_cell_diffs_new()
-        self.new.write_out(path)
 
     def _highlight_cols_new(self):
         """Highlight duplicate and new columns."""
@@ -365,6 +369,7 @@ class XlsDiff:
         msg = msg.format(sheetname, len(self.cell_diff[sheetname]))
         print(msg)
 
+    # pylint: disable=too-many-locals
     def report_cell_diffs(self):
         """Report cell differences."""
         inner = '{:^20}'.format('Diff report')
@@ -421,11 +426,11 @@ def xlsdiff_cli():
     if args.excel is None:
         diff.report_cell_diffs()
     elif isinstance(args.excel, str):
-        diff.write_diff_new(args.excel)
+        diff.write_diff(args.excel)
     else:
         filename, extension = os.path.splitext(file2)
         outpath = os.path.join(filename+'-diff'+extension)
-        diff.write_diff_new(outpath)
+        diff.write_diff(outpath)
 
 
 if __name__ == '__main__':

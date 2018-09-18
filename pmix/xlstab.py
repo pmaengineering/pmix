@@ -90,6 +90,8 @@ class Xlstab(Worksheet):
         """
         if isinstance(language, str):
             language = [language]
+        elif language is None:
+            language = []
         translate_columns = ()
         if self.name == 'survey':
             translate_columns = self.SURVEY_TRANSLATIONS
@@ -146,6 +148,7 @@ class Xlstab(Worksheet):
                     continue
                 yield src, other
 
+    # pylint: disable=too-many-locals
     def lazy_translation_pairs(self, ignore=None, base='English'):
         """Iterate through translation pairs in this tab.
 
@@ -270,6 +273,7 @@ class Xlstab(Worksheet):
             sorted_languages.insert(0, None)
         return sorted_languages
 
+    # pylint: disable=too-many-arguments
     def merge_translations(self, translations, ignore=None, base='English',
                            carry=False, no_diverse=False):
         """Merge translations from a TranslationDict.
@@ -308,7 +312,7 @@ class Xlstab(Worksheet):
             other_lang = other['language']
             if no_diverse:
                 count_unique = translations.count_unique_translations(
-                        src_text, other_lang)
+                    src_text, other_lang)
                 if count_unique > 1:
                     other['cell'].highlight = 'HL_YELLOW'
                     continue
@@ -320,7 +324,7 @@ class Xlstab(Worksheet):
                     other['cell'].highlight = 'HL_ORANGE'
                 elif translated != other_text and other_text == '':
                     other['cell'].highlight = 'HL_GREY'
-                elif translated != other_text: # and other_text != ''
+                elif translated != other_text:  # and other_text != ''
                     other['cell'].highlight = 'HL_BLUE'
             except KeyError:
                 if other['cell'].is_blank():

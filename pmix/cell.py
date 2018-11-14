@@ -12,7 +12,6 @@ class Cell:
         Attributes:
             value: A python object that is stored in the cell. Should be
                 castable as str.
-            highlight: The highlight color for this cell.
 
         Args:
             value: The value of the cell. Defaults to None for a blank cell.
@@ -73,32 +72,32 @@ class Cell:
         return msg
 
     @classmethod
-    def from_cell(cls, cell, datemode=None, stripstr=True):
+    def from_cell(cls, cell, datemode=None, stripstr=True, throw_errs=True):
         """Create a Cell object by importing Cell from xlrd.
 
         Args:
             cell (xlrd.Cell): A cell to copy over.
             datemode (int): The datemode for the workbook where the cell is.
             stripstr (bool): Remove trailing / leading whitespace from text?
+            throw_errs (bool): Should throw errors for error cells?
 
         Returns:
             An intialized cell object.
         """
-        value = cls.cell_value(cell, datemode, stripstr)
-        new_cell = cls(value)
-        return new_cell
+        return cls(cls.cell_value(cell, datemode, stripstr, throw_errs))
 
     @staticmethod
-    def cell_value(cell, datemode=None, stripstr=True):
+    def cell_value(cell, datemode=None, stripstr=True, throw_errs=True):
         """Get python object out of xlrd.Cell value.
 
         Args:
             cell (xlrd.Cell): The cell
             datemode (int): The date mode for the workbook
             stripstr (bool): Remove trailing / leading whitespace from text?
+            throw_errs (bool): Should throw errors for error cells?
 
         Returns:
-            The python object represented by this cell.
+            value (str): The python object represented by this cell.
         """
         value = None
         if cell.ctype == xlrd.XL_CELL_BOOLEAN:
@@ -118,15 +117,11 @@ class Cell:
         elif cell.ctype == xlrd.XL_CELL_DATE:
             value = Cell.parse_datetime(cell.value, datemode)
         elif cell.ctype == xlrd.XL_CELL_ERROR:
-            msg = 'Error cell found. Please correct or erase error cell from '\
-                  'file and try again.\n\nError cells are likely to be one of'\
-                  ' the following: #N/A, #NULL!, #DIV/0!, #VALUE!, #REF!, ' \
-                  '#NAME?, #NUM!, #GETTING_DATA'
-            raise TypeError(msg)
-        else:
-            msg = 'Unhandled cell exception.\nType: {}\nValue: {}'\
-                .format(cell.ctype, cell.value)
-            raise TypeError(msg)
+            value = xlrd.error_text_from_code[cell.value]
+            err_msg = 'Error cell found: {}.\nPlease correct or erase error ' \
+                      'cell from file and try again.'.format(value)
+            if throw_errs:
+                raise TypeError(err_msg)
         return value
 
     @staticmethod

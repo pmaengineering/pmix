@@ -2,7 +2,7 @@
 
 import itertools
 import copy
-import os.path
+import os
 import argparse
 
 import xlrd
@@ -16,19 +16,21 @@ from pmix.worksheet import Worksheet
 class Workbook:
     """Class to represent an Excel file."""
 
-    def __init__(self, path, stripstr=True):
+    def __init__(self, path, stripstr=True, strict_validation=True):
         """Initialize by storing data from spreadsheet.
 
         Args:
             path (str): The path where to find the Excel file
             stripstr (bool): Remove trailing / leading whitespace from text?
+            strict_validation (bool): Should throw errors for error cells?
         """
         self.file = path
         self.data = []
 
         ext = os.path.splitext(path)[1]
         if ext in ('.xls', '.xlsx'):
-            self.data = self.data_from_excel(path, stripstr)
+            self.data = self.data_from_excel(path, stripstr,
+                                             throw_errs=strict_validation)
         else:
             msg = 'Unsupported file type. Extension: "{}"'.format(ext)
             raise TypeError(msg)
@@ -104,12 +106,13 @@ class Workbook:
         return copy.deepcopy(self)
 
     @staticmethod
-    def data_from_excel(path, stripstr=True):
+    def data_from_excel(path, stripstr=True, throw_errs=True):
         """Get data from Excel through xlrd.
 
         Args:
             path (str): The path where to find the Excel file.
             stripstr (bool): Remove trailing / leading whitespace from text?
+            throw_errs (bool): Should throw errors for error cells?
 
         Returns:
             A list of worksheets, matching the source Excel file.
@@ -119,7 +122,8 @@ class Workbook:
             datemode = book.datemode
             for i in range(book.nsheets):
                 ws = book.sheet_by_index(i)
-                my_ws = Worksheet.from_sheet(ws, datemode, stripstr)
+                my_ws = \
+                    Worksheet.from_sheet(ws, datemode, stripstr, throw_errs)
                 result.append(my_ws)
         return result
 
@@ -196,15 +200,15 @@ def workbook_cli():
     file_help = 'Path to source workbook.'
     parser.add_argument('xlsxfile', help=file_help)
 
-    ws_help = ('Remove trailing and leading whitespace of text and newlines.')
+    ws_help = 'Remove trailing and leading whitespace of text and newlines.'
     parser.add_argument('-w', '--whitespace', help=ws_help,
                         action='store_true')
 
-    csv_help = ('Write a worksheet to CSV. Supply the worksheet name here.')
+    csv_help = 'Write a worksheet to CSV. Supply the worksheet name here.'
     parser.add_argument('-c', '--csv', help=csv_help)
 
-    out_help = ('Path to write output. If this argument is not supplied, then '
-                'defaults are used.')
+    out_help = 'Path to write output. If this argument is not supplied, ' \
+               'then defaults are used.'
     parser.add_argument('-o', '--outpath', help=out_help)
 
     args = parser.parse_args()

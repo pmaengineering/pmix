@@ -1,4 +1,7 @@
 """Module defining Xlsform class to work with ODK XLSForms."""
+from copy import deepcopy
+from xlsxwriter.utility import xl_col_to_name
+
 from pmix.xlstab import Xlstab
 from pmix.workbook import Workbook
 
@@ -13,17 +16,20 @@ class Xlsform(Workbook):
     Note: Analogously, the Xlstab class extends the Worksheet class.
     """
 
-    def __init__(self, path, stripstr=True):
+    def __init__(self, path, stripstr=True, strict_validation=True):
         """Initialize workbook and cache Xlsform-specific info.
 
         Args:
             path (str): The path where to find the Xlsform file.
             stripstr (bool): Remove trailing / leading whitespace from text?
+            strict_validation (bool): Should throw errors for error cells?
         """
-        super().__init__(path, stripstr)
+        super().__init__(path, stripstr, strict_validation)
         self.data = [Xlstab.from_worksheet(ws) for ws in self]
         self.settings = {}
         self.init_settings()
+        self.warnings = {}
+        self.init_warnings()
 
     def init_settings(self):
         """Get settings from Xlsform.
@@ -84,6 +90,44 @@ class Xlsform(Workbook):
                 pass
         return language
 
+    def init_warnings(self):
+        """Validate data and return warnings.
+
+        Side effects:
+            self.warnings (dict): sets warnings
+
+        Examples:
+            self.warnings =
+            '#VALUE!': {
+                'survey': [X10, C56, E122]
+            },
+            '#REF!': {
+                'survey': [T5, C53]
+            },
+        }
+        """
+        warnings_schema = {  # taken from xlrd.error_text_from_code
+            '#NULL!': {},  # Intersection of two cell ranges is empty
+            '#DIV/0': {},  # Division by zero
+            '#VALUE!': {},  # Wrong type of operand
+            '#REF!': {},  # Illegal or deleted cell reference
+            '#NAME?': {},  # Wrong function or range name
+            '#NUM!': {},  # Value range overflow
+            '#N/A': {},  # Argument or function not available
+        }
+        warnings = deepcopy(warnings_schema)
+        error_codes = [k for k, v in warnings.items()]
+        for ws in self.data:
+            for i, row in enumerate(ws.data):
+                for j, cell in enumerate(row):
+                    if cell.value in error_codes:
+                        if ws.name not in warnings[cell.value]:
+                            warnings[cell.value][ws.name] = []
+                        label = xl_col_to_name(j)
+                        warnings[cell.value][ws.name].append(label + str(i))
+        warnings = {k: v for k, v in warnings.items() if v != {}}
+        self.warnings = warnings
+
     def add_language(self, language):
         """Add appropriate language columns to an Xlsform.
 
@@ -100,7 +144,7 @@ class Xlsform(Workbook):
         Args:
             translations (TranslationDict): Translations
             ignore (set of str): The languages to ignore when translating
-            carry (bool): Carry the source language over to missing translations
+            carry (bool): Carry source language over to missing translations
             no_diverse (bool): If true, then do not translate text that has
                 multiple translations.
         """

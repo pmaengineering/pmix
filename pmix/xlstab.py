@@ -320,7 +320,7 @@ class Xlstab(Worksheet):
                     other['cell'].highlight = 'HL_ORANGE'
                 elif translated != other_text and other_text == '':
                     other['cell'].highlight = 'HL_GREY'
-                elif translated != other_text: # and other_text != ''
+                elif translated != other_text:  # and other_text != ''
                     other['cell'].highlight = 'HL_BLUE'
             except KeyError:
                 if other['cell'].is_blank():

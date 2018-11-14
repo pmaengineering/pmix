@@ -5,7 +5,6 @@ from setuptools import setup, find_packages
 from pmix import __version__
 
 packages = find_packages(exclude=['test'])
-packages.append('pmix.test')
 
 setup(
     name='pmix',
@@ -14,12 +13,6 @@ setup(
     author_email='jpringle@jhu.edu',
     url='http://www.pma2020.org',
     packages=packages,
-    package_dir={
-        'pmix.test': 'test'
-    },
-    package_data={
-        'pmix.test': ['files/*.xlsx'],
-    },
     license='LICENSE.txt',
     description='Smattering of Python3 tools for PMA workflow',
     long_description=open('README.md').read(),

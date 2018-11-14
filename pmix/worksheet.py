@@ -61,26 +61,30 @@ class Worksheet:
             return 0
 
     @classmethod
-    def from_sheet(cls, sheet, datemode=None, stripstr=True):
+    def from_sheet(cls, sheet, datemode=None, stripstr=True, throw_errs=True):
         """Create Worksheet from xlrd Sheet object.
 
         Args:
             sheet (xlrd.Sheet): A sheet instance to copy over
             datemode (int): The date mode of the Excel workbook
             stripstr (bool): Remove trailing / leading whitespace from text?
+            throw_errs (bool): Should throw errors for error cells?
 
         Returns:
-            An initialized Worksheet object
+            Worksheet: An initialized Worksheet object
         """
         worksheet = cls(name=sheet.name)
         for i in range(sheet.nrows):
-            try:
-                cur_row = [Cell.from_cell(c, datemode, stripstr) for c in
-                           sheet.row(i)]
-                worksheet.data.append(cur_row)
-            except TypeError as err:
-                msg = 'Error in row {}: {}'.format(str(i+1), str(err))
-                raise TypeError(msg)
+            cur_row = []
+            for c in sheet.row(i):
+                try:
+                    cell = Cell.from_cell(c, datemode, stripstr, throw_errs)
+                except TypeError as err:
+                    err = \
+                        '\nError in row {}: {}'.format(str(i + 1), str(err))
+                    raise TypeError(err)
+                cur_row.append(cell)
+            worksheet.data.append(cur_row)
         return worksheet
 
     def prepend_row(self, row=None):

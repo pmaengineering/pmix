@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 """Build a translation file and use it.
 
 Supply source XLSForm(s) to build a translation file. Optionally supply an
@@ -20,7 +19,7 @@ Example:
     file.
 
 Created: 3 October 2016
-Last modified: 21 August 2018
+Last modified: 14 November 2018
 Author: James K. Pringle
 E-mail: jpringle@jhu.edu
 """
@@ -28,9 +27,98 @@ E-mail: jpringle@jhu.edu
 import argparse
 import os.path
 import pathlib
+from typing import List, Set
 
 from pmix.verbiage import TranslationDict
 from pmix.xlsform import Xlsform
+
+
+def create_translation_dict(xlsxfile: List[str], correct: List[str]) \
+        -> TranslationDict:
+    """Create a translation dict from source Excel files.
+
+    Args:
+        xlsxfile: Paths to Excel files
+        correct: Paths to Excel files that should be marked correct
+    """
+    translation_dict = TranslationDict()
+    extracted = set()
+    for path in correct:
+        if path in extracted:
+            continue
+        xlsform = Xlsform(path)
+        translation_dict.extract_translations(xlsform, correct=True)
+        extracted.add(path)
+    for path in xlsxfile:
+        if path in extracted:
+            continue
+        xlsform = Xlsform(path)
+        translation_dict.extract_translations(xlsform)
+        extracted.add(path)
+    return translation_dict
+
+
+def write_translation_file(translation_dict: TranslationDict, outpath: str,
+                           add: List[str], diverse: str) -> None:
+    """Write a translation file.
+
+    Args:
+        translation_dict: The object with translation information
+        outpath: Path where to save the result. Can be a directory or not.
+        add: Languages to add to the translation file
+        diverse: If true, write a diverse translations file
+    """
+    default_filename = pathlib.Path('translations.xlsx')
+    default_directory = pathlib.Path('.')
+    default_outpath = default_directory / default_filename
+    if outpath:
+        path = pathlib.Path(outpath)
+        if path.is_dir():
+            result_path = path / default_filename
+        else:
+            result_path = path
+    else:
+        result_path = default_outpath
+    if diverse:
+        translation_dict.write_diverse_excel(str(result_path), diverse)
+    else:
+        translation_dict.write_excel(str(result_path), add)
+    print('Created translation file: "{}"'.format(str(result_path)))
+
+
+# pylint: disable=too-many-arguments
+def merge_translation_file(merge: List[str], translation_dict: TranslationDict,
+                           outpath: str, add: List[str], ignore: Set[str],
+                           carry: bool, no_diverse: bool):
+    """Merge in translations to designated ODK files.
+
+    Args:
+        merge: The files to merge into
+        translation_dict: The object with translation information
+        outpath: Path where to save the result. Can be a directory or not.
+        add: Languages to add
+        ignore: Languages to ignore when merging
+        carry: If true, carry text from the source language to the translations
+        no_diverse: If true, do not insert a translation that has various
+            choices
+    """
+    if outpath and len(merge) > 1:
+        pathlib.Path(outpath).mkdir(parents=True, exist_ok=True)
+    for path in merge:
+        xlsform = Xlsform(path)
+        xlsform.add_language(add)
+        xlsform.merge_translations(translation_dict, ignore, carry=carry,
+                                   no_diverse=no_diverse)
+        base, ext = os.path.splitext(path)
+        default_filename = ''.join((base, '-borrow', ext))
+        if outpath is None:
+            this_outpath = default_filename
+        elif len(merge) > 1 or pathlib.Path(outpath).is_dir():
+            this_outpath = os.path.join(outpath, default_filename)
+        else:
+            this_outpath = outpath
+        xlsform.write_out(this_outpath)
+        print('Merged translations into file: "{}"'.format(this_outpath))
 
 
 def borrow_cli():
@@ -97,60 +185,21 @@ def borrow_cli():
     )
 
     args = parser.parse_args()
-    print(args)
     ignore = set(args.ignore) if args.ignore else None
     add = sorted(list(set(args.add))) if args.add else None
-
-    translation_dict = TranslationDict()
-    extracted = set()
-    if args.correct:
-        for path in args.correct:
-            if path in extracted:
-                continue
-            xlsform = Xlsform(path)
-            translation_dict.extract_translations(xlsform, correct=True)
-            extracted.add(path)
-    for path in args.xlsxfile:
-        if path in extracted:
-            continue
-        xlsform = Xlsform(path)
-        translation_dict.extract_translations(xlsform)
-        extracted.add(path)
-
+    correct = args.correct if args.correct else []
+    translation_dict = create_translation_dict(args.xlsxfile, correct)
     if args.merge is None and args.merge_all is None:
-        outpath = 'translations.xlsx' if args.outpath is None else args.outpath
-        if args.diverse:
-            translation_dict.write_diverse_excel(outpath, args.diverse)
-        else:
-            translation_dict.write_excel(outpath, add)
-        print('Created translation file: "{}"'.format(outpath))
+        write_translation_file(translation_dict, args.outpath, add,
+                               args.diverse)
     else:
         merge = []
         if args.merge:
             merge.extend(args.merge)
         if args.merge_all:
             merge.extend(args.merge_all)
-        outpath = args.outpath
-        if outpath and len(merge) > 1:
-            pathlib.Path(outpath).mkdir(parents=True, exist_ok=True)
-        for path in merge:
-            xlsform = Xlsform(path)
-            # wb.add_language(add)
-            xlsform.merge_translations(translation_dict, ignore,
-                                       carry=args.carry,
-                                       no_diverse=args.no_diverse)
-            if outpath is None:
-                orig = xlsform.file
-                base, ext = os.path.splitext(orig)
-                this_outpath = ''.join((base, '-borrow', ext))
-            elif len(merge) > 1:
-                orig = xlsform.file
-                base, ext = os.path.splitext(orig)
-                this_outpath = ''.join((outpath, base, '-borrow', ext))
-            else:
-                this_outpath = outpath
-            xlsform.write_out(this_outpath)
-            print('Merged translations into file: "{}"'.format(this_outpath))
+        merge_translation_file(merge, translation_dict, args.outpath, add,
+                               ignore, args.carry, args.no_diverse)
 
 
 if __name__ == '__main__':

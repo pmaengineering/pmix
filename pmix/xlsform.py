@@ -100,7 +100,7 @@ class Xlsform(Workbook):
         Args:
             translations (TranslationDict): Translations
             ignore (set of str): The languages to ignore when translating
-            carry (bool): Carry the source language over to missing translations
+            carry (bool): Carry source language over to missing translations
             no_diverse (bool): If true, then do not translate text that has
                 multiple translations.
         """

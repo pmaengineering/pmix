@@ -1,3 +1,7 @@
+v0.4.1, 03 December 2018
+ * Added direct python API for borrow, e.g. from pmix.borrow import borrow.
+ * Fixed a bug where an Excel workbook would not be created if the path provided was a directory rather than a file. Rather than throwing an error, no error was thrown, and in some cases (e.g. 'borrow'), a success message was still printed.
+
 v0.3.0, 18 September 2018
  * Updated handling of error cells.
  * Added feature to list error cells.

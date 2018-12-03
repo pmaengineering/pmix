@@ -23,7 +23,6 @@ Last modified: 14 November 2018
 Author: James K. Pringle
 E-mail: jpringle@jhu.edu
 """
-
 import argparse
 import os.path
 import pathlib
@@ -106,7 +105,8 @@ def merge_translation_file(merge: List[str], translation_dict: TranslationDict,
         pathlib.Path(outpath).mkdir(parents=True, exist_ok=True)
     for path in merge:
         xlsform = Xlsform(path)
-        xlsform.add_language(add)
+        for language in add:
+            xlsform.add_language(language)
         xlsform.merge_translations(translation_dict, ignore, carry=carry,
                                    no_diverse=no_diverse)
         base, ext = os.path.splitext(path)
@@ -185,21 +185,39 @@ def borrow_cli():
     )
 
     args = parser.parse_args()
-    ignore = set(args.ignore) if args.ignore else None
-    add = sorted(list(set(args.add))) if args.add else None
-    correct = args.correct if args.correct else []
-    translation_dict = create_translation_dict(args.xlsxfile, correct)
-    if args.merge is None and args.merge_all is None:
-        write_translation_file(translation_dict, args.outpath, add,
-                               args.diverse)
+    borrow(merge=args.merge,
+           merge_all=args.merge_all,
+           correct=args.correct,
+           no_diverse=args.no_diverse,
+           diverse=args.diverse,
+           add=args.add,
+           ignore=args.ignore,
+           carry=args.carry,
+           outpath=args.outpath,
+           xlsxfiles=args.xlsxfile)
+
+
+def borrow(xlsxfiles: List[str], merge: List[str], merge_all: List[str],
+           correct: List[str], add: List[str], ignore: List[str],
+           no_diverse: bool = False, diverse=None, carry: bool = False,
+           outpath: str = ''):
+    """Borrow"""
+    xlsx_list = [xlsxfiles] if isinstance(xlsxfiles, str) else xlsxfiles
+    ignore_set = set(ignore) if ignore else None
+    add_list = sorted(list(set(add))) if add else None
+    correct_list = correct if correct else []
+    translation_dict = create_translation_dict(xlsx_list, correct_list)
+    if merge is None and merge_all is None:
+        write_translation_file(translation_dict, outpath, add_list, diverse)
     else:
-        merge = []
-        if args.merge:
-            merge.extend(args.merge)
-        if args.merge_all:
-            merge.extend(args.merge_all)
-        merge_translation_file(merge, translation_dict, args.outpath, add,
-                               ignore, args.carry, args.no_diverse)
+        merge_list = []
+        if merge:
+            pre_merge_list = [merge] if isinstance(merge, str) else merge
+            merge_list.extend(pre_merge_list)
+        if merge_all:
+            merge_list.extend(merge_all)
+        merge_translation_file(merge_list, translation_dict, outpath, add_list,
+                               ignore_set, carry, no_diverse)
 
 
 if __name__ == '__main__':

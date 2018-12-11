@@ -106,7 +106,7 @@ def merge_translation_file(merge: List[str], translation_dict: TranslationDict,
         pathlib.Path(outpath).mkdir(parents=True, exist_ok=True)
     for path in merge:
         xlsform = Xlsform(path)
-        xlsform.add_language(add)
+        xlsform.add_languages(add)
         xlsform.merge_translations(translation_dict, ignore, carry=carry,
                                    no_diverse=no_diverse)
         base, ext = os.path.splitext(path)

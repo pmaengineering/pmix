@@ -123,4 +123,9 @@ setup(
     cmdclass={
         'upload': UploadCommand,
     },
+    entry_points={
+        'console_scripts': [
+            'borrow = pmix.borrow:borrow_cli'
+        ]
+    },
 )

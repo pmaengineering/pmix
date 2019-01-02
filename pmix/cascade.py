@@ -203,6 +203,7 @@ class Cascade:
                 ws.write_row(i, 0, row)
                 if node.rename is not None:
                     ws.write(i, 1, node.rename, highlight)
+        wb.close()
 
     class Iter:  # pylint: disable=too-few-public-methods
         """A class for BFS iterating over this Cascade data structure."""
@@ -288,6 +289,7 @@ class Cascade:
                 identifier_match = child.identifier == node.identifier
                 if name_match and label_match and identifier_match:
                     return child
+            return None
 
         def add_last(self, node):
             """Add a node to the very bottom of this tree.

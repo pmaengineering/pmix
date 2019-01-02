@@ -60,7 +60,7 @@ import copy
 import os.path
 import re
 
-import pmix.utils as utils
+from pmix import utils
 from pmix.xlsform import Xlsform
 
 
@@ -139,7 +139,6 @@ class NumberingContext:
         if increment:
             new_num.increment(increment)
         self.current_series_add(new_num)
-
 
     def sticky(self, cmd):
         """Parse a sticky number command and add the correct number."""
@@ -393,6 +392,7 @@ class Numbering:
         return 'Numbering("{}")'.format(str(self))
 
 
+# pylint: disable=too-many-locals
 def compute_prepend_numbers(inpath, col, outpath, rm_on_empty=False):
     """Compute numbers based on mini-language and prepend to all labels.
 

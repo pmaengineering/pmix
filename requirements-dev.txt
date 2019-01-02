@@ -1,0 +1,6 @@
+pycodestyle==2.4.0
+pydocstyle==2.1.1
+pylint==2.1.1
+twine
+xlrd
+XlsxWriter

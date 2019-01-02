@@ -8,8 +8,8 @@ import argparse
 import xlrd
 import xlsxwriter
 
-import pmix.utils as utils
-import pmix.wbformat as wbformat
+from pmix import utils
+from pmix import wbformat
 from pmix.worksheet import Worksheet
 
 
@@ -88,20 +88,31 @@ class Workbook:
             for i, line in enumerate(worksheet):
                 for j, cell in enumerate(line):
                     this_value = str(cell) if strings else cell.value
-                    # TODO: If more complicated formats, then use a lookup
                     if cell.highlight is None:
                         this_format = None
                     else:
                         this_format = formats[cell.highlight]
-                    # END TODO
                     if this_format is None:
                         ws.write(i, j, this_value)
                     else:
                         ws.write(i, j, this_value, this_format)
+        wb.close()
 
     def copy(self):
         """Make a deep copy of this workbook."""
         return copy.deepcopy(self)
+
+    def get_excel_errors(self):
+        """Get all Excel errors in this workbook.
+
+        Returns:
+            Dictionary with sheetnames as keys and values as Excel errors
+            dictionary for the sheet.
+        """
+        result = {}
+        for sheet in self:
+            result[sheet.name] = sheet.get_excel_errors()
+        return result
 
     @staticmethod
     def data_from_excel(path, stripstr=True):
@@ -148,13 +159,12 @@ class Workbook:
         """
         if isinstance(key, int):
             return self.data[key]
-        elif isinstance(key, str):
+        if isinstance(key, str):
             for sheet in self:
                 if sheet.name == key:
                     return sheet
             raise KeyError(key)
-        else:
-            raise TypeError(key)
+        raise TypeError(key)
 
 
 def remove_extra_whitespace(inpath, outpath):
@@ -188,23 +198,44 @@ def write_sheet_to_csv(inpath, outpath, sheet=0):
     ws.to_csv(outpath)
 
 
+def report_workbook_errors(inpath):
+    """Print to screen the errors in the workbook.
+
+    Args:
+        inpath (str): The path where to find the source file.
+    """
+    wb = Workbook(inpath)
+    errors = wb.get_excel_errors()
+    for sheetname in wb.sheetnames():
+        sheet_errors = errors[sheetname]
+        if sheet_errors:
+            print(f'Errors in sheet: {sheetname}')
+            sheet_errors = errors[sheetname]
+            for key, value in sorted(sheet_errors.items()):
+                cell_names = ', '.join(value)
+                print(f' - {key} -> {cell_names}')
+
+
 def workbook_cli():
     """Run the command line interface for this module."""
-    prog_desc = 'Utilities for workbooks, depending on the options provided'
+    prog_desc = 'Utilities for workbooks, depending on the options provided.'
     parser = argparse.ArgumentParser(description=prog_desc)
 
     file_help = 'Path to source workbook.'
     parser.add_argument('xlsxfile', help=file_help)
 
-    ws_help = ('Remove trailing and leading whitespace of text and newlines.')
+    ws_help = 'Remove trailing and leading whitespace of text and newlines.'
     parser.add_argument('-w', '--whitespace', help=ws_help,
                         action='store_true')
 
-    csv_help = ('Write a worksheet to CSV. Supply the worksheet name here.')
+    csv_help = 'Write a worksheet to CSV. Supply the worksheet name here.'
     parser.add_argument('-c', '--csv', help=csv_help)
 
-    out_help = ('Path to write output. If this argument is not supplied, then '
-                'defaults are used.')
+    parser.add_argument('-e', '--errors', action='store_true',
+                        help='List out the errors in the workbook.')
+
+    out_help = ('Path to write output. If this argument is not supplied, '
+                'then defaults are used.')
     parser.add_argument('-o', '--outpath', help=out_help)
 
     args = parser.parse_args()
@@ -229,6 +260,8 @@ def workbook_cli():
 
         write_sheet_to_csv(args.xlsxfile, outpath, args.csv)
         print('Wrote csv file to "{}"'.format(outpath))
+    elif args.errors:
+        report_workbook_errors(args.xlsxfile)
 
 
 if __name__ == '__main__':

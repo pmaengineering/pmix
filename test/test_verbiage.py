@@ -20,7 +20,6 @@
 import unittest
 
 import pmix.utils as utils
-from pmix.verbiage import TranslationDict
 
 
 class TranslationDictNumberSplitTest(unittest.TestCase):

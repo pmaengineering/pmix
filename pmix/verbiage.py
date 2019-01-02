@@ -3,7 +3,7 @@ import logging
 
 import xlsxwriter
 
-import pmix.utils as utils
+from pmix import utils
 import pmix.workbook
 import pmix.xlsform
 
@@ -81,7 +81,7 @@ class TranslationDict:
 
         Args:
             obj: A source object, either Xlsform or Workbook
-            correct (bool): Whether or not the input file is treated as correct.
+            correct (bool): Whether or not the input file is treated as correct
         """
         if isinstance(obj, pmix.xlsform.Xlsform):
             self.translations_from_xlsform(obj, correct)
@@ -95,7 +95,7 @@ class TranslationDict:
 
         Args:
             xlsform (Xlsform): The Xlsform object to get translations from.
-            correct (bool): Whether or not the input file is treated as correct.
+            correct (bool): Whether or not the input file is treated as correct
         """
         for xlstab in xlsform:
             for pair in xlstab.lazy_translation_pairs(base=self.base):
@@ -155,7 +155,7 @@ class TranslationDict:
             other (dict): A dictionary containing the CellData namedtuple and
                 other metadata.
             lang (str): String name of other language
-            correct (bool): Whether or not the input file is treated as correct.
+            correct (bool): Whether or not the input file is treated as correct
         """
         cleaned_src = utils.td_clean_string(src)
         cleaned_other = utils.td_clean_string(str(other['cell']))
@@ -163,7 +163,7 @@ class TranslationDict:
         if not correct and cleaned_src in self.correct:
             # Currently not a correct translation, but we have correct
             return
-        elif correct and cleaned_src not in self.correct and cleaned_src in \
+        if correct and cleaned_src not in self.correct and cleaned_src in \
                 self.data:
             # Remove the old, non-correct translation
             self.data.pop(cleaned_src, None)
@@ -319,6 +319,7 @@ class TranslationDict:
                 all_languages.add(language)
         return all_languages
 
+    # pylint: disable=too-many-locals
     def write_excel(self, path, others=None):
         """Write translation data to an Excel spreadsheet.
 
@@ -350,7 +351,9 @@ class TranslationDict:
                 except KeyError:
                     # Missing information is highlighted
                     ws.write(i + 1, j + 1, '', red_background)
+        wb.close()
 
+    # pylint: disable=too-many-locals
     def write_diverse_excel(self, path, language):
         """Write translation duplicate data to an Excel spreadsheet.
 
@@ -377,6 +380,7 @@ class TranslationDict:
                     ws.write(i + 1, j + 1, translation)
                 else:
                     ws.write(i + 1, j + 1, translation, red_background)
+        wb.close()
 
     def __str__(self):
         """Return a string representation of the data."""

@@ -20,10 +20,16 @@ This version requires Python 3 or later. Python 2 is not supported.
 
 ## Installation
 
-Run:
+This package is on PyPI! Run:
 
 ```
-python3 -m pip install https://github.com/jkpr/pmix/zipball/master
+python3 -m pip install pmix
+```
+
+For developers, to install from Github, run:
+
+```
+python3 -m pip install https://github.com/PMA-2020/pmix/zipball/master
 ```
 
 ## Analytics
@@ -159,7 +165,7 @@ with highlighting to show differences.
 ![#FFF78E](https://placehold.it/15/FFF78E/000000?text=+) *Light Yellow* -- Cells that are different between the the two files  
 ![#00ff00](https://placehold.it/15/00ff00/000000?text=+) *Green* -- Rows that are in a changed order  
 
-![XlsDiff](docs/xlsdiff_output.png)
+![XlsDiff](static/xlsdiff_output.png)
 
 ##### Options
 | Short Flag | Long Flag | Description |
@@ -172,7 +178,7 @@ with highlighting to show differences.
 ## Viffer
 Viffer is a tool that provides a tabulated report on the differences between two XlsForms. Viffer stands for "Version Diff'er".
 
-![XlsDiff](docs/viffer_output_small.png)
+![XlsDiff](static/viffer_output_small.png)
 
 This tool is currently under development under another fork of pmix. If interested in using it, please see: https://github.com/joeflack4/pmix/tree/feature_viffer#viffer
 

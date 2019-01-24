@@ -1,6 +1,7 @@
 """Module defining Xlsform class to work with ODK XLSForms."""
 from copy import deepcopy
 from xlsxwriter.utility import xl_col_to_name
+from typing import List, Optional
 
 from pmix.xlstab import Xlstab
 from pmix.workbook import Workbook
@@ -16,15 +17,14 @@ class Xlsform(Workbook):
     Note: Analogously, the Xlstab class extends the Worksheet class.
     """
 
-    def __init__(self, path, stripstr=True, strict_validation=True):
+    def __init__(self, path: str, stripstr: bool = True):
         """Initialize workbook and cache Xlsform-specific info.
 
         Args:
-            path (str): The path where to find the Xlsform file.
-            stripstr (bool): Remove trailing / leading whitespace from text?
-            strict_validation (bool): Should throw errors for error cells?
+            path: The path where to find the Xlsform file.
+            stripstr: Remove trailing / leading whitespace from text?
         """
-        super().__init__(path, stripstr, strict_validation)
+        super().__init__(path, stripstr)
         self.data = [Xlstab.from_worksheet(ws) for ws in self]
         self.settings = {}
         self.init_settings()
@@ -46,33 +46,33 @@ class Xlsform(Workbook):
             self.settings = {}
 
     @property
-    def form_id(self):
+    def form_id(self) -> str:
         """Return form_id setting value."""
         self.init_settings()
         form_id = self.settings['form_id']
         return form_id
 
     @property
-    def form_title(self):
+    def form_title(self) -> str:
         """Return form_title setting value."""
         self.init_settings()
         form_title = self.settings['form_title']
         return form_title
 
     @property
-    def settings_language(self):
+    def settings_language(self) -> Optional[str]:
         """Return default language from settings or None if not found."""
         self.init_settings()
         default_language = self.settings.get('default_language', None)
         return default_language
 
     @property
-    def survey_languages(self):
-        """Retur sorted languages from headers for survey worksheet."""
+    def survey_languages(self) -> List[str]:
+        """Return sorted languages from headers for survey worksheet."""
         return self['survey'].sheet_languages()
 
     @property
-    def form_language(self):
+    def form_language(self) -> Optional[str]:
         """Return default language for a form.
 
         Considers settings tab first, then gets language from survey tab.
@@ -128,14 +128,23 @@ class Xlsform(Workbook):
         warnings = {k: v for k, v in warnings.items() if v != {}}
         self.warnings = warnings
 
-    def add_language(self, language):
+    def add_language(self, language: str):
         """Add appropriate language columns to an Xlsform.
 
         Args:
-            language (str): The language to add to all relevant sheets.
+            language: The language to add to all relevant sheets.
         """
         for sheet in self:
             sheet.add_language(language)
+
+    def add_languages(self, languages: List[str]):
+        """Add appropriate language columns to an Xlsform.
+
+        Args:
+            languages: The languages to add to all relevant sheets.
+        """
+        for language in languages:
+            self.add_language(language)
 
     def merge_translations(self, translations, ignore=None, carry=False,
                            no_diverse=False):

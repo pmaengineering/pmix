@@ -1,8 +1,10 @@
 """Module for Worksheet class."""
+from collections import defaultdict
 import csv
 
 from pmix.cell import Cell
 from pmix.error import SpreadsheetError
+from pmix.utils import number_to_excel_column
 
 
 class Worksheet:
@@ -61,14 +63,13 @@ class Worksheet:
             return 0
 
     @classmethod
-    def from_sheet(cls, sheet, datemode=None, stripstr=True, throw_errs=True):
+    def from_sheet(cls, sheet, datemode=None, stripstr=True):
         """Create Worksheet from xlrd Sheet object.
 
         Args:
             sheet (xlrd.Sheet): A sheet instance to copy over
             datemode (int): The date mode of the Excel workbook
             stripstr (bool): Remove trailing / leading whitespace from text?
-            throw_errs (bool): Should throw errors for error cells?
 
         Returns:
             Worksheet: An initialized Worksheet object
@@ -76,13 +77,16 @@ class Worksheet:
         worksheet = cls(name=sheet.name)
         for i in range(sheet.nrows):
             cur_row = []
-            for c in sheet.row(i):
+            for j, col in enumerate(sheet.row(i)):
                 try:
-                    cell = Cell.from_cell(c, datemode, stripstr, throw_errs)
+                    cell = Cell.from_cell(col, datemode, stripstr)
                 except TypeError as err:
-                    err = \
-                        '\nError in row {}: {}'.format(str(i + 1), str(err))
-                    raise TypeError(err)
+                    new_msg = 'Error sheet {} in cell {}{}: {}'
+                    excel_row = i + 1
+                    col_letter = number_to_excel_column(j)
+                    new_msg = new_msg.format(sheet.name, col_letter, excel_row,
+                                             str(err))
+                    raise TypeError(new_msg)
                 cur_row.append(cell)
             worksheet.data.append(cur_row)
         return worksheet
@@ -269,6 +273,22 @@ class Worksheet:
         """Iterate over the cells of a worksheet."""
         for row in self:
             yield from row
+
+    def get_excel_errors(self):
+        """Get all Excel errors in this worksheet.
+
+        Returns:
+            A dictionary with error text as keys and values as lists of cell
+            locations.
+        """
+        errors = defaultdict(list)
+        for i, row in enumerate(self):
+            for j, cell in enumerate(row):
+                if cell.is_error():
+                    error_text = cell.value.error_text
+                    location = f'{number_to_excel_column(j)}{i+1}'
+                    errors[error_text].append(location)
+        return errors
 
     def __iter__(self):
         """Return an iterator on the rows of this Worksheet."""

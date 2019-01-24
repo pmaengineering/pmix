@@ -1,23 +1,49 @@
 SRC=./pmix/
 TEST=./test/
 
-.PHONY: lint tags ltags test all lint_all codestyle docstyle lint_src \
-lint_test doctest linters_all  remove-previous-build build  pypi-push-test \
-pypi-push install upgrade uninstall reinstall backup-trunk-develop \
-push-latest-to-trunk pypi-push-only
+
+.PHONY: style style_all lint lint_src lint_test codestyle codestyle_src \
+codestyle_test docstyle docstyle_src docstyle_test test clean build pypi \
+pypi_test pip_no_cache help
+
+
+help:
+	@echo " make style          # Check style of source with linters"
+	@echo " make style_all      # Check style of source and test with linters"
+	@echo ""
+	@echo " make lint           # Run pylint on source and test code"
+	@echo " make lint_src       # Run pylint on source code"
+	@echo " make lint_test      # Run pylint on test code"
+	@echo ""
+	@echo " make codestyle      # Run pycodestyle on source and test code"
+	@echo " make codestyle_src  # Run pycodestyle on source code"
+	@echo " make codestyle_test # Run pycodestyle on test code"
+	@echo ""
+	@echo " make docstyle       # Run pycdocstyle on source and test code"
+	@echo " make docstyle_src   # Run pycdocstyle on source code"
+	@echo " make docstyle_test  # Run pycdocstyle on test code"
+	@echo ""
+	@echo " make test           # Run tests"
+	@echo ""
+	@echo " make build          # Create Python sdist and wheel"
+	@echo " make clean          # Remove generated files from a build"
+	@echo " make pypi_test      # Build and push to test PyPI"
+	@echo " make pypi           # Build and push to PyPI"
+
 
 # Batched Commands
-all: linters_all test_all
-lint: lint_src codestyle_src docstyle_src
-linters_all: docstyle codestyle lint_all
+style: lint_src codestyle_src docstyle_src
+style_all: lint codestyle docstyle
+
 
 # Pylint Only
 PYLINT_BASE =python3 -m pylint --output-format=colorized --reports=n
-lint_all: lint_src lint_test
+lint: lint_src lint_test
 lint_src:
 	${PYLINT_BASE} ${SRC}
 lint_test:
 	${PYLINT_BASE} ${TEST}
+
 
 # PyCodeStyle Only
 PYCODESTYLE_BASE=python3 -m pycodestyle
@@ -27,6 +53,7 @@ codestyle_src:
 codestyle_test:
 	 ${PYCODESTYLE_BASE} ${TEST}
 
+
 # PyDocStyle Only
 PYDOCSTYLE_BASE=python3 -m pydocstyle
 docstyle: docstyle_src docstyle_test
@@ -35,41 +62,23 @@ docstyle_src:
 docstyle_test:
 	${PYDOCSTYLE_BASE} ${TEST}
 
-# Text Editor Commands
-TAGS_BASE=ctags -R --python-kinds=-i
-tags:
-	${TAGS_BASE} .
-ltags:
-	${TAGS_BASE} ${SRC}
-codetest:
-	${CODE_TEST}
-
-# PYDOCSTYLE
-doc:
-	${DOC_SRC
 
 # TESTING
 test:
 	python3 -m unittest discover -v
-testdoc:
-	python3 -m test.test --doctests-only
-test_all: test testdoc
 
-# Package Management
-install:
-	pip install -r requirements-unlocked.txt --no-cache-dir; \
-	pip freeze > requirements.txt
-remove-previous-build:
+
+# PACKAGE MANAGEMENT
+clean:
 	rm -rf ./dist;
 	rm -rf ./build;
 	rm -rf ./*.egg-info
-build: remove-previous-build
+build: clean
 	python3 setup.py sdist bdist_wheel
-pypi-push-test: build
+install:
+	pip install -r requirements-unlocked.txt --no-cache-dir; \
+	pip freeze > requirements.txt
+pypi: build
+	twine upload --repository-url https://upload.pypi.org/legacy/ dist/*;
+pypi_test: build
 	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-pypi-push-only:
-	twine upload --repository-url https://upload.pypi.org/legacy/ dist/*; \
-	make remove-previous-build
-pypi-push:
-	make pypi-push-only; \
-	make push-latest-to-trunk

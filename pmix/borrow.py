@@ -240,7 +240,6 @@ def borrow_cli():
     )
 
     args = parser.parse_args()
-    print(args)
     borrow(
         xlsxfiles=args.xlsxfile,
         correct=args.correct,

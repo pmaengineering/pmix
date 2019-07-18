@@ -31,12 +31,82 @@ from pmix.verbiage import TranslationDict
 from pmix.xlsform import Xlsform
 
 
-def create_translation_dict(xlsxfile: List[str], correct: List[str]) \
+parser = argparse.ArgumentParser(
+    description='Grab translations from existing XLSForms'
+)
+parser.add_argument(
+    'xlsxfiles', nargs='+',
+    help='One or more paths to source XLSForms containing translations.'
+)
+parser.add_argument(
+    '-m', '--merge', action='append',
+    help=('An XLSForm that receives the translations from source '
+          'files. If this argument is not supplied, then a '
+          'translation file is created. Multiple files can be supplied, '
+          'each with the -m flag.')
+)
+parser.add_argument(
+    '-M', '--merge_all', nargs='+',
+    help=('Merge into many files. To avoid ambiguity, this must be placed '
+          'after the source XLSForms.')
+)
+parser.add_argument(
+    '-C', '--correct', action='append',
+    help=('Mark a given file as correct. Text from these files will '
+          'disallow diverse translations from files not marked as '
+          'correct. This is a way to give files precedence for '
+          'translations.')
+)
+parser.add_argument(
+    '-D', '--no_diverse', action='store_true',
+    help='If text has diverse translations, do not borrow it.'
+)
+parser.add_argument(
+    '-d', '--diverse',
+    help=('Supply a language. Used without the --merge argument, '
+          'this creates a worksheet that shows only strings with '
+          'diverse translations for the supplied language.')
+)
+parser.add_argument(
+    '-a', '--add', action='append',
+    help=('Add a language to the resulting output. The translation file '
+          'will have a column for that language. Or, the merged XLSForm '
+          'will include columns for that language and have translations '
+          'for them if possible. This option can be supplied multiple '
+          'times.')
+)
+parser.add_argument(
+    '-i', '--ignore', action='append',
+    help=('A language to ignore when collecting and making '
+          'translations. This option can be supplied multiple times')
+)
+parser.add_argument(
+    '-c', '--carry', action='store_true',
+    help=('If translations are missing, carry over the same text from '
+          'the source language. The default is to leave missing.')
+)
+parser.add_argument(
+    '-o', '--outfile',
+    help=('Path to write output. If this argument is not supplied, then '
+          'defaults are used. If a command would produce multiple '
+          'outputs, then do not use this argument. Instead use '
+          '"--outdir".')
+)
+parser.add_argument(
+    '-O', '--outdir',
+    help=('A directory to use (and create if it does not exist) for '
+          'writing output. Ignored if -o is supplied. Defaults are used'
+          'for filenames. If neither outfile nor outdir are supplied, '
+          'then default filenames are used in the current directory.')
+)
+
+
+def create_translation_dict(xlsxfiles: List[str], correct: List[str]) \
         -> TranslationDict:
     """Create a translation dict from source Excel files.
 
     Args:
-        xlsxfile: Paths to Excel files
+        xlsxfiles: Paths to Excel files
         correct: Paths to Excel files that should be marked correct
     """
     translation_dict = TranslationDict()
@@ -47,7 +117,7 @@ def create_translation_dict(xlsxfile: List[str], correct: List[str]) \
         xlsform = Xlsform(path)
         translation_dict.extract_translations(xlsform, correct=True)
         extracted.add(path)
-    for path in xlsxfile:
+    for path in xlsxfiles:
         if path in extracted:
             continue
         xlsform = Xlsform(path)
@@ -170,97 +240,30 @@ def merge_translation_file(merge: List[str], translation_dict: TranslationDict,
 
 def borrow_cli():
     """Run the CLI for this module."""
-    parser = argparse.ArgumentParser(
-        description='Grab translations from existing XLSForms'
-    )
-    parser.add_argument(
-        'xlsxfile', nargs='+',
-        help='One or more paths to source XLSForms containing translations.'
-    )
-    parser.add_argument(
-        '-m', '--merge', action='append',
-        help=('An XLSForm that receives the translations from source '
-              'files. If this argument is not supplied, then a '
-              'translation file is created. Multiple files can be supplied, '
-              'each with the -m flag.')
-    )
-    parser.add_argument(
-        '-M', '--merge_all', nargs='+',
-        help=('Merge into many files. To avoid ambiguity, this must be placed '
-              'after the source XLSForms.')
-    )
-    parser.add_argument(
-        '-C', '--correct', action='append',
-        help=('Mark a given file as correct. Text from these files will '
-              'disallow diverse translations from files not marked as '
-              'correct. This is a way to give files precedence for '
-              'translations.')
-    )
-    parser.add_argument(
-        '-D', '--no_diverse', action='store_true',
-        help='If text has diverse translations, do not borrow it.'
-    )
-    parser.add_argument(
-        '-d', '--diverse',
-        help=('Supply a language. Used without the --merge argument, '
-              'this creates a worksheet that shows only strings with '
-              'diverse translations for the supplied language.')
-    )
-    parser.add_argument(
-        '-a', '--add', action='append',
-        help=('Add a language to the resulting output. The translation file '
-              'will have a column for that language. Or, the merged XLSForm '
-              'will include columns for that language and have translations '
-              'for them if possible. This option can be supplied multiple '
-              'times.')
-    )
-    parser.add_argument(
-        '-i', '--ignore', action='append',
-        help=('A language to ignore when collecting and making '
-              'translations. This option can be supplied multiple times')
-    )
-    parser.add_argument(
-        '-c', '--carry', action='store_true',
-        help=('If translations are missing, carry over the same text from '
-              'the source language. The default is to leave missing.')
-    )
-    parser.add_argument(
-        '-o', '--outfile',
-        help=('Path to write output. If this argument is not supplied, then '
-              'defaults are used. If a command would produce multiple '
-              'outputs, then do not use this argument. Instead use '
-              '"--outdir".')
-    )
-    parser.add_argument(
-        '-O', '--outdir',
-        help=('A directory to use (and create if it does not exist) for '
-              'writing output. Ignored if -o is supplied. Defaults are used'
-              'for filenames. If neither outfile nor outdir are supplied, '
-              'then default filenames are used in the current directory.')
-    )
-
     args = parser.parse_args()
-    print(args)
-    borrow(
-        xlsxfiles=args.xlsxfile,
-        correct=args.correct,
-        merge=args.merge,
-        merge_all=args.merge_all,
-        no_diverse=args.no_diverse,
-        diverse=args.diverse,
-        add=args.add,
-        ignore=args.ignore,
-        carry=args.carry,
-        outfile=args.outfile,
-        outdir=args.outdir,
-    )
+    borrow_vars: List[str] = borrow.__code__.co_varnames
+    borrow_attrs: List[str] = borrow_vars[:borrow.__code__.co_argcount]
+    kwargs = {
+        attr: getattr(args, attr)
+        for attr in borrow_attrs
+    }
+    borrow(**kwargs)
 
 
 # pylint: disable=too-many-locals
-def borrow(*, xlsxfiles: List[str], correct: List[str], merge: List[str],
-           merge_all: List[str], add: List[str], ignore: List[str],
-           no_diverse: bool = False, diverse: str = None, carry: bool = False,
-           outfile: str = None, outdir: str = None):
+def borrow(
+    xlsxfiles: List[str],
+    correct: List[str] = None,
+    merge: List[str] = None,
+    merge_all: List[str] = None,
+    add: List[str] = None,
+    ignore: List[str] = None,
+    diverse: str = None,
+    outfile: str = None,
+    outdir: str = None,
+    carry: bool = False,
+    no_diverse: bool = False,
+):
     """Borrow files with this Python routine.
 
     This method exists so that non-CLI users can run borrow. See CLI help
@@ -273,12 +276,12 @@ def borrow(*, xlsxfiles: List[str], correct: List[str], merge: List[str],
         merge_all: Files to merge into
         add: Languages to add
         ignore: Languages to ignore
-        no_diverse: Do not allow source segments with diverse translations to
-            be updated
-        carry: Copy over source segments as a translation if no translation
-            exists
         outfile: Filename where to write the result
         outdir: Directory where to write the result
+        carry: Copy over source segments as a translation if no translation
+            exists
+        no_diverse: Do not allow source segments with diverse translations to
+            be updated
     """
     source_files = xlsxfiles
     correct_files = correct if correct else []

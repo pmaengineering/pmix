@@ -13,3 +13,5 @@ tags
 /*.html
 *.egg-info
 output/
+/*.xlsx
+/pmix/*.xlsx

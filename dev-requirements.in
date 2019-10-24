@@ -1,0 +1,6 @@
+-c requirements.txt
+pycodestyle
+pydocstyle
+pylint
+black
+twine

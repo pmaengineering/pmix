@@ -11,6 +11,8 @@ import xlsxwriter
 from pmix import utils
 from pmix import wbformat
 from pmix.worksheet import Worksheet
+from pmix.cell import CellError
+import pmix.utils
 
 
 class Workbook:
@@ -85,6 +87,7 @@ class Workbook:
         formats = self.init_formats(wb)
         for worksheet in self.data:
             ws = wb.add_worksheet(worksheet.name)
+            ws.add_write_handler(CellError, _write_cell_error)
             for i, line in enumerate(worksheet):
                 for j, cell in enumerate(line):
                     this_value = str(cell) if strings else cell.value
@@ -92,10 +95,17 @@ class Workbook:
                         this_format = None
                     else:
                         this_format = formats[cell.highlight]
-                    if this_format is None:
-                        ws.write(i, j, this_value)
-                    else:
-                        ws.write(i, j, this_value, this_format)
+                    try:
+                        if this_format is None:
+                            ws.write(i, j, this_value)
+                        else:
+                            ws.write(i, j, this_value, this_format)
+                    except TypeError:
+                        excel_column = pmix.utils.number_to_excel_column(j)
+                        msg = ("Unable to save XLSX file because unexpected type at "
+                               "cell {}{} in sheet '{}'. Found {!r}")
+                        msg = msg.format(excel_column, i + 1, worksheet.name, cell)
+                        raise TypeError(msg)
         wb.close()
 
     def copy(self):
@@ -165,6 +175,11 @@ class Workbook:
                     return sheet
             raise KeyError(key)
         raise TypeError(key)
+
+
+def _write_cell_error(worksheet, row, col, cell_error, format=None):
+    """Handler for xlsxwriter to write a CellError."""
+    return worksheet.write_string(row, col, str(cell_error), format)
 
 
 def remove_extra_whitespace(inpath, outpath):

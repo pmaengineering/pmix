@@ -1,5 +1,5 @@
 SRC=./pmix/
-TEST=./test/
+TEST=./tests/
 
 
 .PHONY: style style_all lint lint_src lint_test codestyle codestyle_src \
@@ -62,6 +62,13 @@ docstyle_src:
 docstyle_test:
 	${PYDOCSTYLE_BASE} ${TEST}
 
+
+# Black
+black: black_src black_all
+black_src:
+	python3 -m black ${SRC}
+black_test:
+	python3 -m black ${TEST}
 
 # TESTING
 test:

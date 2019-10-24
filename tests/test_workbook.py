@@ -8,7 +8,7 @@ from pmix.workbook import Workbook
 class ExcelErrorDetectionTest(unittest.TestCase):
     """Detect Excel errors in an Excel file."""
 
-    FORM_DIR = 'test/static'
+    FORM_DIR = 'tests/static'
 
     def test_find_errors(self):
         """Find errors in Excel workbook."""

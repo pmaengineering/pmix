@@ -7,7 +7,7 @@ from pmix.xlsform import Xlsform
 class XlsFormLanguageTest(unittest.TestCase):
     """Unit tests for testing form languages in Xlsform and Xlstab."""
 
-    FORM_DIR = 'test/static'
+    FORM_DIR = 'tests/static'
 
     def test_form_language(self):
         """Form language is correctly determined."""

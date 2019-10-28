@@ -42,26 +42,30 @@ class Worksheet:
         else:
             self.name = name
 
+    @property
     def dim(self):
         """Return the dimensions of this Worksheet as tuple (nrow, ncol)."""
-        nrow = len(self)
-        ncol = self.ncol()
-        return nrow, ncol
+        return self.nrow, self.ncol
 
+    @property
+    def nrow(self):
+        """Return the number of rows for this Worksheet."""
+        return len(self)
+
+    @property
     def ncol(self):
         """Return the number of columns for this Worksheet.
 
         Checks that all rows have the same length.
         """
+        length = 0
         if self:
             lengths = {len(line) for line in self}
             if len(lengths) > 1:
                 msg = 'Worksheet has inconsistent column counts'
                 raise SpreadsheetError(msg)
-            else:
-                return iter(lengths).__next__()
-        else:
-            return 0
+            length = next(iter(lengths))
+        return length
 
     @classmethod
     def from_sheet(cls, sheet, datemode=None, stripstr=True):
@@ -89,26 +93,6 @@ class Worksheet:
             worksheet.data.append(cur_row)
         return worksheet
 
-    def prepend_row(self, row=None):
-        """Insert a row as the first row in this sheet.
-
-        Args:
-            row (sequence): A sequence of values to insert as the first row
-                of this worksheet.
-        """
-        if row is None and self.data:
-            new_row = [Cell() for _ in self.data[0]]
-            self.data.insert(0, new_row)
-        elif row is None:
-            self.data.append([Cell()])
-        elif len(row) != self.ncol():
-            msg = 'Worksheet and supplied row width inconsistent ({} vs. {})'
-            msg = msg.format(self.ncol(), len(row))
-            raise SpreadsheetError(msg)
-        else:
-            new_row = [c if isinstance(c, Cell) else Cell(c) for c in row]
-            self.data.insert(0, new_row)
-
     def append_col(self, header=None):
         """Append a column to the end of the worksheet.
 
@@ -120,6 +104,7 @@ class Worksheet:
                 row.append(Cell(header))
             else:
                 row.append(Cell())
+        self.update_cell_context()
 
     def column_headers(self):
         """Get the column headers for this worksheet.
@@ -152,7 +137,7 @@ class Worksheet:
         """
         headers = self.column_headers()
         if indices is None:
-            indices = list(range(self.ncol()))
+            indices = list(range(self.ncol))
         else:
             result = []
             for i in indices:
@@ -171,6 +156,7 @@ class Worksheet:
         for i, row in enumerate(self):
             if i < start:
                 continue
+            # TODO: Row / Col / Header information is in Cell.context now.
             base_data = {
                 'row': i,
                 'col': base,
@@ -322,10 +308,10 @@ class Worksheet:
 
     def __str__(self):
         """Return string representation of the Worksheet."""
-        msg = '<"{}": {}>'.format(self.name, self.data)
+        msg = f'<{self.name!r}: {self.data!r}>'
         return msg
 
     def __repr__(self):
         """Return formal representation of the Worksheet."""
-        msg = '<Worksheet(name="{}"), dim={}>'.format(self.name, self.dim())
+        msg = f'<Worksheet(name="{self.name}"), dim={self.dim}>'
         return msg

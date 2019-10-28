@@ -2,6 +2,49 @@
 import datetime
 import xlrd
 
+import pmix.utils
+
+
+class CellContext:
+    """Cell context information.
+
+    This class stores information about the cell and where it is.
+
+    Instance attributes:
+        filename: The filename of the Excel file
+        sheet: The sheet name
+        row: The
+    """
+
+    def __init__(self, filename: str, sheet: str, row: int, column: int,
+                 column_header: str):
+        """Initialize a cell context."""
+        self.filename = filename
+        self.sheet = sheet
+        self.row = row
+        self.column = column
+        self.column_header = column_header
+
+    def to_excel(self) -> str:
+        """Get the Excel cell name for this cell."""
+        if self.row < 0 or self.column < 0:
+            return ""
+        return pmix.utils.xl_rowcol_to_cell(self.row, self.column)
+
+    @classmethod
+    def empty_context(cls):
+        """Create an empty context.
+
+        This is meant to be a place holder until later.
+        """
+        return cls(None, None, -1, -1, None)
+
+    def __repr__(self):
+        """Get a representation of this object."""
+        return (f"CellContext(filename={self.filename!r}, sheet={self.sheet!r}, "
+                f"row={self.row!r}, column={self.column!r}, "
+                f"column_header={self.column_header!r})")
+
 
 class CellError:
     """An Excel cell error.
@@ -41,7 +84,7 @@ class Cell:
         highlight (str): The highlight color for this cell.
     """
 
-    def __init__(self, value=None):
+    def __init__(self, value=None, *, context: CellContext = None):
         """Initialize cell to have value as Python object.
 
         Args:
@@ -49,6 +92,7 @@ class Cell:
         """
         self.value = value
         self.highlight = None
+        self.context = context if context else CellContext.empty_context()
 
     def is_blank(self):
         """Test whether cell is blank."""

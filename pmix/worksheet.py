@@ -2,9 +2,10 @@
 from collections import defaultdict
 import csv
 
-from pmix.cell import Cell
+from xlsxwriter.utility import xl_rowcol_to_cell
+
+from pmix.cell import Cell, CellContext
 from pmix.error import SpreadsheetError
-from pmix.utils import number_to_excel_column
 
 
 class Worksheet:
@@ -81,12 +82,9 @@ class Worksheet:
                 try:
                     cell = Cell.from_cell(col, datemode, stripstr)
                 except TypeError as err:
-                    new_msg = 'Error sheet {} in cell {}{}: {}'
-                    excel_row = i + 1
-                    col_letter = number_to_excel_column(j)
-                    new_msg = new_msg.format(sheet.name, col_letter, excel_row,
-                                             str(err))
-                    raise TypeError(new_msg)
+                    xl_name = xl_rowcol_to_cell(i, j)
+                    msg = f'Error sheet {sheet.name} in cell {xl_name}: {err!s}'
+                    raise TypeError(msg)
                 cur_row.append(cell)
             worksheet.data.append(cur_row)
         return worksheet
@@ -286,9 +284,29 @@ class Worksheet:
             for j, cell in enumerate(row):
                 if cell.is_error():
                     error_text = cell.value.error_text
-                    location = f'{number_to_excel_column(j)}{i+1}'
+                    location = xl_rowcol_to_cell(i, j)
                     errors[error_text].append(location)
         return errors
+
+    def update_cell_context(self, filename: str = None):
+        """Update Cell context information.
+
+        This method brings all cell context information into sync.
+
+        Args:
+            filename: The filename where this Workbook is stored. If
+                filename is None, then it isn't modified in current
+                cell contexts.
+
+        """
+        headers = self.column_headers()
+        for i, row in enumerate(self):
+            for j, cell in enumerate(row):
+                _filename = filename if filename else cell.context.filename
+                sheetname = self.name
+                header = headers[j]
+                cell_context = CellContext(_filename, sheetname, i, j, header)
+                cell.context = cell_context
 
     def __iter__(self):
         """Return an iterator on the rows of this Worksheet."""

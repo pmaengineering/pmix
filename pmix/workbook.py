@@ -7,33 +7,34 @@ import argparse
 
 import xlrd
 import xlsxwriter
+from xlsxwriter.utility import xl_rowcol_to_cell
 
 from pmix import utils
 from pmix import wbformat
 from pmix.worksheet import Worksheet
 from pmix.cell import CellError
-import pmix.utils
 
 
 class Workbook:
     """Class to represent an Excel file."""
 
-    def __init__(self, path, stripstr=True):
+    def __init__(self, filename, stripstr=True):
         """Initialize by storing data from spreadsheet.
 
         Args:
-            path (str): The path where to find the Excel file
+            filename (str): The path where to find the Excel file
             stripstr (bool): Remove trailing / leading whitespace from text?
         """
-        self.file = path
+        self.filename = filename
         self.data = []
 
-        ext = os.path.splitext(path)[1]
+        ext = os.path.splitext(filename)[1]
         if ext in ('.xls', '.xlsx'):
-            self.data = self.data_from_excel(path, stripstr)
+            self.data = self.data_from_excel(filename, stripstr)
         else:
             msg = 'Unsupported file type. Extension: "{}"'.format(ext)
             raise TypeError(msg)
+        self.update_cell_context()
 
     def sheetnames(self):
         """Get sheetnames from this Workbook.
@@ -101,10 +102,10 @@ class Workbook:
                         else:
                             ws.write(i, j, this_value, this_format)
                     except TypeError:
-                        excel_column = pmix.utils.number_to_excel_column(j)
-                        msg = ("Unable to save XLSX file because unexpected type at "
-                               "cell {}{} in sheet '{}'. Found {!r}")
-                        msg = msg.format(excel_column, i + 1, worksheet.name, cell)
+                        xl_name = xl_rowcol_to_cell(i, j)
+                        msg = (f"Unable to save XLSX file because unexpected type at "
+                               f"cell {xl_name} in sheet '{worksheet.name}'. "
+                               f"Found {cell!r}")
                         raise TypeError(msg)
         wb.close()
 
@@ -123,6 +124,14 @@ class Workbook:
         for sheet in self:
             result[sheet.name] = sheet.get_excel_errors()
         return result
+
+    def update_cell_context(self):
+        """Update Cell context information.
+
+        This method brings all cell context information into sync.
+        """
+        for sheet in self:
+            sheet.update_cell_context(self.filename)
 
     @staticmethod
     def data_from_excel(path, stripstr=True):

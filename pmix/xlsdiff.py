@@ -34,7 +34,8 @@ from collections import defaultdict, Counter, namedtuple
 import difflib
 import os.path
 
-from pmix import utils
+from xlsxwriter.utility import xl_rowcol_to_cell
+
 import pmix.workbook
 
 
@@ -384,12 +385,9 @@ class XlsDiff:
             outer = '{:-^60}'.format(inner)
             print(outer)
             for record in cell_list:
-                base_row = record.row_a + 1
-                base_col = utils.number_to_excel_column(record.col_a)
-                new_row = record.row_b + 1
-                new_col = utils.number_to_excel_column(record.col_b)
-                msg = '>>> Base[{}{}] != New[{}{}]'
-                msg = msg.format(base_col, base_row, new_col, new_row)
+                base_xl_name = xl_rowcol_to_cell(record.row_a, record.col_a)
+                new_xl_name = xl_rowcol_to_cell(record.row_b, record.col_b)
+                msg = f'>>> Base[{base_xl_name}] != New[{new_xl_name}]'
                 print(msg)
                 cell1_lines = str(record.cell_a).splitlines()
                 cell2_lines = str(record.cell_b).splitlines()

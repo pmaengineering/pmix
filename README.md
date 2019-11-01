@@ -7,10 +7,9 @@ on working with spreadsheets. The main features are the following:
 * [Borrow](#borrow)
 * [Cascade](#cascade)
 * [Numbering](#numbering)
-* [PPP](#ppp)
+* [Renumber](#renumber)
 * [Workbook](#workbook)
 * [XlsDiff](#xlsdiff)
-* [Viffer](#viffer)
 
 Formerly [`qlang`](https://github.com/jkpr/qlang), this package has been renamed and expanded to provide new
 functionality and new command-line tools. The command line tools are described after installation.
@@ -134,6 +133,36 @@ python3 -m pmix.numbering FILE
 The program then looks for a column entitled "N" in the "survey" worksheet. It creates numbers based off of the
 directives there and adds them to label columns.
 
+## Renumber
+
+Does bulk find / replace in an XLSForm.
+Takes a renumber file and an XLSForm as input and writes an Excel file. 
+The renumber file should be an Excel file with renumbering rules on the first tab.
+Each row should use the first two columns (no need for a header). 
+The first column is what is the "find" and the second column is the "replace" in a traditional find/replace setup.
+
+Example:
+
+| Col. A | Col. B |
+| --- | --- |
+| 109 | 101 |
+| 113 | 102 |
+
+This replaces all occurrences of `109` with `101` and replaces all occurrences of `113` with `102`.
+
+The result is an Excel file with the following highlighting.
+
+
+* ![#FFD3B9](https://placehold.it/15/FFD3B6/000000?text=+) *Orange/Peach* -- Cells that have text that match the "find" column, but that text is not changed with the replace. A `201` to `201` find/replace rule is valid.  
+* ![#FFF78E](https://placehold.it/15/FFFA81/000000?text=+) *Light Yellow* -- Cells that were changed with a find/replace rule.
+
+On the command line use 
+
+```
+python3 -m pmix.renumber path/to/xlsform.xlsx path/to/renumber/file.xlsx
+```
+
+
 ## Workbook
 
 There following features are offered:
@@ -175,18 +204,6 @@ with highlighting to show differences.
 | -s | --simple | Do a simple diff instead of the default ODK diff. |
 | -e | --excel | Path to write Excel output. If flag is given with no argument then default out path is used. If flag is omitted, then write text output to STDOUT.|
 
-## Viffer
-Viffer is a tool that provides a tabulated report on the differences between two XlsForms. Viffer stands for "Version Diff'er".
-
-![XlsDiff](static/viffer_output_small.png)
-
-This tool is currently under development under another fork of pmix. If interested in using it, please see: https://github.com/joeflack4/pmix/tree/feature_viffer#viffer
-
-##### Example Usage
-Generate a Viffer report.
-`python -m  pmix.viffer old_form.xlsx new_form.xlsx`
-
-
 ## Bugs
 
 Submit bug reports to James Pringle at jpringleBEAR@jhu.edu minus the bear.
@@ -204,10 +221,8 @@ sur le travail avec des feuilles de calcul. Les principales caractéristiques so
 * [Borrow](#borrow)
 * [Cascade](#cascade)
 * [Numbering](#numbering)
-* [PPP](#ppp)
 * [Workbook](#workbook)
 * [XlsDiff](#xlsdiff)
-* [Viffer](#viffer)
 
 
 Anciennement [`qlang`] (https://github.com/jkpr/qlang), ce package a été renommé et développé pour offrir de nouvelles fonctionnalités et de nouveaux outils de ligne de commande. Les outils de ligne de commande sont décrits après l'installation.
@@ -263,16 +278,17 @@ le fichier spécifié par `-m
 
 1) Sans `-m`,
 
-`` `
+```
 python3 -m pmix.borrow  FILE1 [FILE2 ...]
-`` `
+```
 
 crée un dictionnaire de traduction à partir de `FILE1 [FILE2 ...]`.
 
 2) Avec `-m`,
 
-`` `
-python3 -m pmix.borrow -m TARGET FILE1 [FILE2 ...] 
+```
+python3 -m pmix.borrow -m TARGET FILE1 [FILE2 ...]
+``` 
 
 crée un dictionnaire de traduction à partir de `FILE1 [FILE2 ...]` et fusionne ensuite dans `TARGET`.
 

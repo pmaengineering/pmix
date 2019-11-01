@@ -1,5 +1,7 @@
 """Useful string functions for PMIX."""
+from collections import namedtuple
 import re
+import string
 
 
 NUMBER_RE = r"""
@@ -20,6 +22,44 @@ NUMBER_RE = r"""
 
 # pylint: disable=no-member
 NUMBER_PROG = re.compile(NUMBER_RE, re.VERBOSE)
+
+
+NumberLabelSplit = namedtuple('NumberLabelSplit',
+                              ['number', 'delimiter', 'space', 'label'])
+NUMBER_DELIMITER = ('.', ':', ')')
+VALID_NUMBER_ALPHABET = tuple(string.ascii_letters + string.digits + '._-')
+
+
+def split_numbered_text(text: str) -> NumberLabelSplit:
+    stripped = text.strip()
+    this_split = stripped.split(maxsplit=1)
+    if not this_split:
+        return NumberLabelSplit('', '', '', '')
+    else:
+        label = this_split[1].strip() if len(this_split) > 1 else ''
+        space = ' ' if len(this_split) > 1 else ''
+        candidate_number = this_split[0]
+        if is_proper_number(candidate_number):
+            number, delimiter = candidate_number[:-1], candidate_number[-1]
+            return NumberLabelSplit(number, delimiter, space, label)
+        return NumberLabelSplit('', '', '', stripped)
+
+
+def is_proper_number(text: str):
+    if len(text) < 2:
+        return False
+    ends_with = ['.', ':', ')']
+    proper_ending = any(text.endswith(ending) for ending in ends_with)
+    if not proper_ending:
+        return False
+    if len(text) == 2 and text[0] in string.ascii_letters:
+        return True
+    number, delimiter = text[:-1], text[-1]
+    has_digit = any(i.isdigit() for i in number)
+    all_valid_characters = all(i in VALID_NUMBER_ALPHABET for i in number)
+    first_valid = number[0] in string.ascii_letters + string.digits
+    last_valid = number[-1] in string.ascii_letters + string.digits
+    return has_digit and all_valid_characters and first_valid and last_valid
 
 
 def td_clean_string(text):

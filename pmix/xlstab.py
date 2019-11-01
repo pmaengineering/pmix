@@ -82,6 +82,41 @@ class Xlstab(Worksheet):
         xlstab = cls(data=worksheet.data, name=worksheet.name)
         return xlstab
 
+    def label_columns(self, *, indices_only: bool = False):
+        """Get the column indices on this tab that are labels.
+
+        Args:
+            indices_only: Return the indices only? Otherwise, returns a list of the
+                indices and header strings as a tuples.
+        """
+        headers = self.column_headers()
+        filtered = filter(lambda pair: pair[1].startswith('label'), enumerate(headers))
+        label_columns = list(filtered)
+        if indices_only:
+            return [index for index, _ in label_columns]
+        return label_columns
+
+    def translatable_columns(self, *, indices_only: bool = False):
+        """Get the column indices on this tab that are translatable.
+
+        Args:
+            indices_only: Return the indices only? Otherwise, returns a list of the
+                indices and strings as a tuples.
+        """
+        translate_columns = ()
+        if self.name == 'survey':
+            translate_columns = self.SURVEY_TRANSLATIONS
+        elif self.name in ('choices', 'external_choices'):
+            translate_columns = self.CHOICES_TRANSLATIONS
+        headers = self.column_headers()
+        to_translate = []
+        for i, header in enumerate(headers):
+            if any(header.startswith(translate) for translate in translate_columns):
+                to_translate.append((i, header))
+        if indices_only:
+            return [pair[0] for pair in to_translate]
+        return to_translate
+
     def add_language(self, language: str):
         """Add the used translatable columns in the given language.
 

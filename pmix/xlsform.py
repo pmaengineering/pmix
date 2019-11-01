@@ -118,3 +118,6 @@ class Xlsform(Workbook):
         for sheet in self:
             sheet.merge_translations(translations, ignore, carry=carry,
                                      no_diverse=no_diverse)
+
+    def __getitem__(self, item) -> Xlstab:
+        return super().__getitem__(item)

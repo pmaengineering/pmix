@@ -1,3 +1,10 @@
+v0.6.0, 1 November 2019
+ * Added "renumber" module for bulk find/replace
+ * Added "CellContext" class to carry information about cells
+
+v0.5.0
+ * Update for borrow-web
+
 v0.4.1, 11 April 2019
  * Small patch to remove print statement
 

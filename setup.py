@@ -9,7 +9,7 @@ from shutil import rmtree
 # Package meta-data.
 NAME = 'pmix'
 DESCRIPTION = 'A mixed bag of Python3 tools for PMA workflow'
-URL = 'https://github.com/PMA-2020/pmix'
+URL = 'https://github.com/pmaengineering/pmix'
 EMAIL = 'jpringle@jhu.edu'
 AUTHOR = 'James Pringle'
 REQUIRES_PYTHON = '>=3.6.0'
@@ -116,6 +116,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy'
     ],

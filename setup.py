@@ -65,12 +65,15 @@ class UploadCommand(Command):
         print('\033[1m{0}\033[0m'.format(s))
 
     def initialize_options(self):
+        """Initialize options"""
         pass
 
     def finalize_options(self):
+        """Finalize options"""
         pass
 
     def run(self):
+        """Run"""
         try:
             self.status('Removing previous builds…')
             rmtree(os.path.join(here, 'dist'))
@@ -78,8 +81,8 @@ class UploadCommand(Command):
             pass
 
         self.status('Building Source and Wheel (universal) distribution…')
-        os.system(
-            '{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
+        os.system('{0} setup.py sdist bdist_wheel --universal'
+                  .format(sys.executable))
 
         self.status('Uploading the package to PyPI via Twine…')
         os.system('twine upload dist/*')

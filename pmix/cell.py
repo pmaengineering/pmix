@@ -44,6 +44,10 @@ class Cell:
     def __init__(self, value=None):
         """Initialize cell to have value as Python object.
 
+        Attributes:
+            value: A python object that is stored in the cell. Should be
+                castable as str.
+
         Args:
             value: The value of the cell. Defaults to None for a blank cell.
         """

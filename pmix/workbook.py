@@ -1,5 +1,4 @@
 """Module defines a Workbook class to represent Excel files."""
-
 import itertools
 import copy
 import os.path

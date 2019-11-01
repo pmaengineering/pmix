@@ -75,6 +75,9 @@ clean:
 	rm -rf ./*.egg-info
 build: clean
 	python3 setup.py sdist bdist_wheel
+install:
+	pip install -r requirements-unlocked.txt --no-cache-dir; \
+	pip freeze > requirements.txt
 pypi: build
 	twine upload --repository-url https://upload.pypi.org/legacy/ dist/*;
 pypi_test: build

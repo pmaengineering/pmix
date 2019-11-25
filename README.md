@@ -204,6 +204,13 @@ with highlighting to show differences.
 | -s | --simple | Do a simple diff instead of the default ODK diff. |
 | -e | --excel | Path to write Excel output. If flag is given with no argument then default out path is used. If flag is omitted, then write text output to STDOUT.|
 
+## Setting up a development environment
+
+1. Clone the repo
+2. Create a virtual environment `python3 -m venv env/`
+3. After activating the virtual environment, install `pip-tools` with `python3 -m pip install pip-tools`
+4. Download all dependencies with `pip-sync dev-requirements.txt requirements.txt`
+
 ## Bugs
 
 Submit bug reports to James Pringle at jpringleBEAR@jhu.edu minus the bear.

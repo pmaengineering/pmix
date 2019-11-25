@@ -106,7 +106,7 @@ class TranslationDict:
                     continue
                 src = str(first_cell)
                 language = second['language']
-                second['file'] = xlsform.file
+                second['file'] = xlsform.filename
                 second['sheet'] = xlstab.name
                 self.add_translation(src, second, language, correct)
 
@@ -134,7 +134,7 @@ class TranslationDict:
                         continue
                     src = str(first_cell)
                     lang = second_cell.header
-                    second['file'] = workbook.file
+                    second['file'] = workbook.filename
                     second['sheet'] = worksheet.name
                     self.add_translation(src, second, lang, correct)
             except ValueError:

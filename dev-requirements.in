@@ -4,3 +4,4 @@ pydocstyle
 pylint
 black
 twine
+wheel

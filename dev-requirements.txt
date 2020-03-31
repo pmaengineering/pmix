@@ -7,8 +7,8 @@
 appdirs==1.4.3            # via black
 astroid==2.3.2            # via pylint
 attrs==19.3.0             # via black
-black==19.10b0
-bleach==3.1.0             # via readme-renderer
+black==19.10b0            # via -r dev-requirements.in
+bleach==3.1.4             # via readme-renderer
 certifi==2019.9.11        # via requests
 chardet==3.0.4            # via requests
 click==7.0                # via black
@@ -19,10 +19,10 @@ lazy-object-proxy==1.4.2  # via astroid
 mccabe==0.6.1             # via pylint
 pathspec==0.6.0           # via black
 pkginfo==1.5.0.1          # via twine
-pycodestyle==2.5.0
-pydocstyle==4.0.1
+pycodestyle==2.5.0        # via -r dev-requirements.in
+pydocstyle==4.0.1         # via -r dev-requirements.in
 pygments==2.4.2           # via readme-renderer
-pylint==2.4.3
+pylint==2.4.3             # via -r dev-requirements.in
 readme-renderer==24.0     # via twine
 regex==2019.11.1          # via black
 requests-toolbelt==0.9.1  # via twine
@@ -31,12 +31,12 @@ six==1.12.0               # via astroid, bleach, readme-renderer
 snowballstemmer==2.0.0    # via pydocstyle
 toml==0.10.0              # via black
 tqdm==4.36.1              # via twine
-twine==2.0.0
-typed-ast==1.4.0          # via astroid, black
+twine==2.0.0              # via -r dev-requirements.in
+typed-ast==1.4.0          # via black
 urllib3==1.25.6           # via requests
 webencodings==0.5.1       # via bleach
-wheel==0.33.6
+wheel==0.33.6             # via -r dev-requirements.in
 wrapt==1.11.2             # via astroid
 
 # The following packages are considered to be unsafe in a requirements file:
-# setuptools==42.0.1        # via twine
+# setuptools

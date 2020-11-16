@@ -1,8 +1,8 @@
 """Module defining Xlsform class to work with ODK XLSForms."""
 from typing import List, Optional
 
-from pmix.xlstab import Xlstab
-from pmix.workbook import Workbook
+from pmix.spreadsheet.xlstab import Xlstab
+from pmix.spreadsheet.workbook import Workbook
 
 
 class Xlsform(Workbook):
@@ -33,11 +33,14 @@ class Xlsform(Workbook):
         Post-condition: the Xlsform's settings are stored in the instance.
         """
         try:
-            local_settings = self['settings']
+            local_settings = self["settings"]
             headers = local_settings[0]
             values = local_settings[1]
-            self.settings = {str(k): str(v) for k, v in zip(headers, values) if
-                             not k.is_blank() and not v.is_blank()}
+            self.settings = {
+                str(k): str(v)
+                for k, v in zip(headers, values)
+                if not k.is_blank() and not v.is_blank()
+            }
         except (KeyError, IndexError):
             self.settings = {}
 
@@ -45,27 +48,27 @@ class Xlsform(Workbook):
     def form_id(self) -> str:
         """Return form_id setting value."""
         self.init_settings()
-        form_id = self.settings['form_id']
+        form_id = self.settings["form_id"]
         return form_id
 
     @property
     def form_title(self) -> str:
         """Return form_title setting value."""
         self.init_settings()
-        form_title = self.settings['form_title']
+        form_title = self.settings["form_title"]
         return form_title
 
     @property
     def settings_language(self) -> Optional[str]:
         """Return default language from settings or None if not found."""
         self.init_settings()
-        default_language = self.settings.get('default_language', None)
+        default_language = self.settings.get("default_language", None)
         return default_language
 
     @property
     def survey_languages(self) -> List[str]:
         """Return sorted languages from headers for survey worksheet."""
-        return self['survey'].sheet_languages()
+        return self["survey"].sheet_languages()
 
     @property
     def form_language(self) -> Optional[str]:
@@ -104,8 +107,9 @@ class Xlsform(Workbook):
         for language in languages:
             self.add_language(language)
 
-    def merge_translations(self, translations, ignore=None, carry=False,
-                           no_diverse=False):
+    def merge_translations(
+        self, translations, ignore=None, carry=False, no_diverse=False
+    ):
         """Merge translations.
 
         Args:
@@ -116,8 +120,6 @@ class Xlsform(Workbook):
                 multiple translations.
         """
         for sheet in self:
-            sheet.merge_translations(translations, ignore, carry=carry,
-                                     no_diverse=no_diverse)
-
-    def __getitem__(self, item) -> Xlstab:
-        return super().__getitem__(item)
+            sheet.merge_translations(
+                translations, ignore, carry=carry, no_diverse=no_diverse
+            )

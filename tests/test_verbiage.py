@@ -28,20 +28,20 @@ class TranslationDictNumberSplitTest(unittest.TestCase):
     def test_yes_split_text(self):
         """Test that question identifiers are correctly split from label."""
         yes_split = (
-            ('SIQ4. Where did you hear about bilharzia?', 'SIQ4. '),
-            ('M-2.  Are you menstruating today? ', 'M-2.  '),
-            ('G. In what month and year were you born?', 'G. '),
-            ('B. Your name:', 'B. '),
-            ('SIQ29. What is your tribe?', 'SIQ29. '),
-            ('CCA-4. What is the test result?', 'CCA-4. '),
-            ('CCA-5a. The test is positive.', 'CCA-5a. '),
-            ('P.  Questionnaire result', 'P.  '),
-            ('M. Résultat du Questionnaire', 'M. '),
-            ('QF24a. Vous avez dit que vous n’utilisez pas...', 'QF24a. '),
-            ('QF1. Quel âge aviez-vous à votre dernier...?', 'QF1. '),
-            ('114c.1. My nutrition question', '114c.1. '),
-            ('114c.d.i. My falsified question', '114c.d.i. '),
-            ('411i. Post pregnancy usage', '411i. ')
+            ("SIQ4. Where did you hear about bilharzia?", "SIQ4. "),
+            ("M-2.  Are you menstruating today? ", "M-2.  "),
+            ("G. In what month and year were you born?", "G. "),
+            ("B. Your name:", "B. "),
+            ("SIQ29. What is your tribe?", "SIQ29. "),
+            ("CCA-4. What is the test result?", "CCA-4. "),
+            ("CCA-5a. The test is positive.", "CCA-5a. "),
+            ("P.  Questionnaire result", "P.  "),
+            ("M. Résultat du Questionnaire", "M. "),
+            ("QF24a. Vous avez dit que vous n’utilisez pas...", "QF24a. "),
+            ("QF1. Quel âge aviez-vous à votre dernier...?", "QF1. "),
+            ("114c.1. My nutrition question", "114c.1. "),
+            ("114c.d.i. My falsified question", "114c.d.i. "),
+            ("411i. Post pregnancy usage", "411i. "),
         )
         for lab, num in yes_split:
             number, dummy = utils.td_split_text(lab)
@@ -52,24 +52,24 @@ class TranslationDictNumberSplitTest(unittest.TestCase):
         """Test that question identifiers do not appear in label."""
         # self.longMessage = True  # Deactivated; Unused & causes lint errors.
         no_split = (
-            'READ THIS WARNING: This individual questionnaire...',
-            'Press OK to continue',
-            'Region:',
-            'Enumeration Area:',
-            'Previously, ${cg_SHQ} was indicated as a caregiver...',
-            'Ask ${cg_SIQ}: SIQ13. ${firstname} atera  okufuka  mu  nsiko?',
-            'CHECK: Is anyone other than ${firstname} present at this time?',
-            '${firstname}: is married.',
-            'Section 3 - Bilharzia History',
-            'ERROR: Start of filtration is before the collection time. ',
-            '',
-            'sayana_150x300.jpg'
+            "READ THIS WARNING: This individual questionnaire...",
+            "Press OK to continue",
+            "Region:",
+            "Enumeration Area:",
+            "Previously, ${cg_SHQ} was indicated as a caregiver...",
+            "Ask ${cg_SIQ}: SIQ13. ${firstname} atera  okufuka  mu  nsiko?",
+            "CHECK: Is anyone other than ${firstname} present at this time?",
+            "${firstname}: is married.",
+            "Section 3 - Bilharzia History",
+            "ERROR: Start of filtration is before the collection time. ",
+            "",
+            "sayana_150x300.jpg",
         )
         for lab in no_split:
             number, dummy = utils.td_split_text(lab)
             msg = 'Number present in "{}"'.format(lab)
-            self.assertTrue(number == '', msg=msg)
+            self.assertTrue(number == "", msg=msg)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

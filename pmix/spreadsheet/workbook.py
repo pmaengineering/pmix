@@ -10,9 +10,9 @@ import xlsxwriter
 from xlsxwriter.utility import xl_rowcol_to_cell
 
 from pmix import utils
-from pmix import wbformat
-from pmix.worksheet import Worksheet
-from pmix.cell import CellError
+from pmix.spreadsheet import wbformat
+from pmix.spreadsheet.worksheet import Worksheet
+from pmix.spreadsheet.cell import CellError
 
 
 class Workbook:
@@ -29,7 +29,7 @@ class Workbook:
         self.data = []
 
         ext = os.path.splitext(filename)[1]
-        if ext in ('.xls', '.xlsx'):
+        if ext in (".xls", ".xlsx"):
             self.data = self.data_from_excel(filename, stripstr)
         else:
             msg = 'Unsupported file type. Extension: "{}"'.format(ext)
@@ -67,7 +67,7 @@ class Workbook:
         """
         formats = {}
         for k, v in wbformat.HL_COLORS.items():
-            this_format = wb.add_format({'bg_color': v})
+            this_format = wb.add_format({"bg_color": v})
             formats[k] = this_format
         return formats
 
@@ -101,12 +101,14 @@ class Workbook:
                             ws.write(i, j, this_value)
                         else:
                             ws.write(i, j, this_value, this_format)
-                    except TypeError:
+                    except TypeError as err:
                         xl_name = xl_rowcol_to_cell(i, j)
-                        msg = (f"Unable to save XLSX file because unexpected type at "
-                               f"cell {xl_name} in sheet '{worksheet.name}'. "
-                               f"Found {cell!r}")
-                        raise TypeError(msg)
+                        msg = (
+                            f"Unable to save XLSX file because unexpected type at "
+                            f"cell {xl_name} in sheet '{worksheet.name}'. "
+                            f"Found {cell!r}"
+                        )
+                        raise TypeError(msg) from err
         wb.close()
 
     def copy(self):
@@ -186,6 +188,7 @@ class Workbook:
         raise TypeError(key)
 
 
+# pylint: disable=redefined-builtin
 def _write_cell_error(worksheet, row, col, cell_error, format=None):
     """Handler for xlsxwriter to write a CellError."""
     return worksheet.write_string(row, col, str(cell_error), format)
@@ -204,7 +207,7 @@ def remove_extra_whitespace(inpath, outpath):
         new_value = utils.clean_string(old_value)
         if old_value != new_value:
             cell.value = new_value
-            cell.highlight = 'HL_YELLOW'
+            cell.highlight = "HL_YELLOW"
     wb.write_out(outpath)
 
 
@@ -233,41 +236,46 @@ def report_workbook_errors(inpath):
     for sheetname in wb.sheetnames():
         sheet_errors = errors[sheetname]
         if sheet_errors:
-            print(f'Errors in sheet: {sheetname}')
+            print(f"Errors in sheet: {sheetname}")
             sheet_errors = errors[sheetname]
             for key, value in sorted(sheet_errors.items()):
-                cell_names = ', '.join(value)
-                print(f' - {key} -> {cell_names}')
+                cell_names = ", ".join(value)
+                print(f" - {key} -> {cell_names}")
 
 
 def workbook_cli():
     """Run the command line interface for this module."""
-    prog_desc = 'Utilities for workbooks, depending on the options provided.'
+    prog_desc = "Utilities for workbooks, depending on the options provided."
     parser = argparse.ArgumentParser(description=prog_desc)
 
-    file_help = 'Path to source workbook.'
-    parser.add_argument('xlsxfile', help=file_help)
+    file_help = "Path to source workbook."
+    parser.add_argument("xlsxfile", help=file_help)
 
-    ws_help = 'Remove trailing and leading whitespace of text and newlines.'
-    parser.add_argument('-w', '--whitespace', help=ws_help,
-                        action='store_true')
+    ws_help = "Remove trailing and leading whitespace of text and newlines."
+    parser.add_argument("-w", "--whitespace", help=ws_help, action="store_true")
 
-    csv_help = 'Write a worksheet to CSV. Supply the worksheet name here.'
-    parser.add_argument('-c', '--csv', help=csv_help)
+    csv_help = "Write a worksheet to CSV. Supply the worksheet name here."
+    parser.add_argument("-c", "--csv", help=csv_help)
 
-    parser.add_argument('-e', '--errors', action='store_true',
-                        help='List out the errors in the workbook.')
+    parser.add_argument(
+        "-e",
+        "--errors",
+        action="store_true",
+        help="List out the errors in the workbook.",
+    )
 
-    out_help = ('Path to write output. If this argument is not supplied, '
-                'then defaults are used.')
-    parser.add_argument('-o', '--outpath', help=out_help)
+    out_help = (
+        "Path to write output. If this argument is not supplied, "
+        "then defaults are used."
+    )
+    parser.add_argument("-o", "--outpath", help=out_help)
 
     args = parser.parse_args()
 
     if args.whitespace:
         filename, extension = os.path.splitext(args.xlsxfile)
         if args.outpath is None:
-            outpath = os.path.join(filename+'-rmws'+extension)
+            outpath = os.path.join(filename + "-rmws" + extension)
         else:
             outpath = args.outpath
         remove_extra_whitespace(args.xlsxfile, outpath)
@@ -277,10 +285,10 @@ def workbook_cli():
         sheet_name = args.csv
         if args.outpath is not None:
             outpath = args.outpath
-        elif sheet_name.endswith('.csv'):
+        elif sheet_name.endswith(".csv"):
             outpath = os.path.join(base, sheet_name)
         else:
-            outpath = os.path.join(base, sheet_name + '.csv')
+            outpath = os.path.join(base, sheet_name + ".csv")
 
         write_sheet_to_csv(args.xlsxfile, outpath, args.csv)
         print('Wrote csv file to "{}"'.format(outpath))
@@ -288,5 +296,5 @@ def workbook_cli():
         report_workbook_errors(args.xlsxfile)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     workbook_cli()

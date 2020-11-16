@@ -1,19 +1,21 @@
 """Tests for Xlsform module."""
 import os
 import unittest
-from pmix.xlsform import Xlsform
+from pmix import Xlsform
 
 
 class XlsFormLanguageTest(unittest.TestCase):
     """Unit tests for testing form languages in Xlsform and Xlstab."""
 
-    FORM_DIR = 'tests/static'
+    FORM_DIR = "tests/static"
 
     def test_form_language(self):
         """Form language is correctly determined."""
-        answers = (('language-default-none.xlsx', None),
-                   ('language-missing-default.xlsx', 'Dioula'),
-                   ('language-settings-default.xlsx', 'French'))
+        answers = (
+            ("language-default-none.xlsx", None),
+            ("language-missing-default.xlsx", "Dioula"),
+            ("language-settings-default.xlsx", "French"),
+        )
 
         for path, language in answers:
             form_path = os.path.join(self.FORM_DIR, path)
@@ -25,12 +27,22 @@ class XlsFormLanguageTest(unittest.TestCase):
     def test_sheet_language(self):
         """Languages found in a sheet are correctly determined."""
         answers = (
-            ('language-default-none.xlsx', {
-                'survey': [None, 'Dioula', 'English', 'French', 'Fulfulde',
-                           'Gourmantchema', 'Moore'],
-                'choices': ['English', 'French'],
-                'settings': []
-            }),
+            (
+                "language-default-none.xlsx",
+                {
+                    "survey": [
+                        None,
+                        "Dioula",
+                        "English",
+                        "French",
+                        "Fulfulde",
+                        "Gourmantchema",
+                        "Moore",
+                    ],
+                    "choices": ["English", "French"],
+                    "settings": [],
+                },
+            ),
         )
 
         for path, answer in answers:

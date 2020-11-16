@@ -1,6 +1,6 @@
 """Module for the Xlstab class."""
 from pmix.error import XlsformError
-from pmix.worksheet import Worksheet
+from pmix.spreadsheet.worksheet import Worksheet
 
 
 class Xlstab(Worksheet):
@@ -19,20 +19,15 @@ class Xlstab(Worksheet):
     """
 
     SURVEY_TRANSLATIONS = (
-        'label',
-        'hint',
-        'constraint_message',
-        'audio',
-        'video',
-        'image'
+        "label",
+        "hint",
+        "constraint_message",
+        "audio",
+        "video",
+        "image",
     )
 
-    CHOICES_TRANSLATIONS = (
-        'label',
-        'audio',
-        'video',
-        'image'
-    )
+    CHOICES_TRANSLATIONS = ("label", "audio", "video", "image")
 
     def __init__(self, *, data=None, name=None):
         """Initialize an Xlstab.
@@ -48,7 +43,7 @@ class Xlstab(Worksheet):
 
     def __repr__(self):
         """Return formal representation of the Xlstab."""
-        msg = '<Xlstab(name="{}"), dim={}>'.format(self.name, self.dim())
+        msg = '<Xlstab(name="{}"), dim={}>'.format(self.name, self.dim)
         return msg
 
     def assert_unique_cols(self):
@@ -57,7 +52,7 @@ class Xlstab(Worksheet):
         found = list(filter(None, headers))
         unique = set(found)
         if len(found) != len(unique):
-            raise XlsformError('Headers not unique in {}'.format(self.name))
+            raise XlsformError("Headers not unique in {}".format(self.name))
 
     def dict_rows(self):
         """Iterate over rows, returning dictionairy for each row.
@@ -73,7 +68,7 @@ class Xlstab(Worksheet):
         for i, row in enumerate(self):
             if i == 0:
                 continue
-            json_row = {k: v for k, v in zip(headers, row)}
+            json_row = dict(zip(headers, row))
             yield json_row
 
     @classmethod
@@ -90,7 +85,7 @@ class Xlstab(Worksheet):
                 indices and header strings as a tuples.
         """
         headers = self.column_headers()
-        filtered = filter(lambda pair: pair[1].startswith('label'), enumerate(headers))
+        filtered = filter(lambda pair: pair[1].startswith("label"), enumerate(headers))
         label_columns = list(filtered)
         if indices_only:
             return [index for index, _ in label_columns]
@@ -104,9 +99,9 @@ class Xlstab(Worksheet):
                 indices and strings as a tuples.
         """
         translate_columns = ()
-        if self.name == 'survey':
+        if self.name == "survey":
             translate_columns = self.SURVEY_TRANSLATIONS
-        elif self.name in ('choices', 'external_choices'):
+        elif self.name in ("choices", "external_choices"):
             translate_columns = self.CHOICES_TRANSLATIONS
         headers = self.column_headers()
         to_translate = []
@@ -126,9 +121,9 @@ class Xlstab(Worksheet):
         if language is None:
             return
         translate_columns = ()
-        if self.name == 'survey':
+        if self.name == "survey":
             translate_columns = self.SURVEY_TRANSLATIONS
-        elif self.name in ('choices', 'external_choices'):
+        elif self.name in ("choices", "external_choices"):
             translate_columns = self.CHOICES_TRANSLATIONS
         headers = self.column_headers()
         to_translate = []
@@ -136,10 +131,10 @@ class Xlstab(Worksheet):
             if any(h.startswith(col) for h in headers):
                 to_translate.append(col)
         for col in to_translate:
-            header = '{}::{}'.format(col, language)
+            header = "{}::{}".format(col, language)
             self.append_col(header)
 
-    def translation_pairs(self, ignore=None, base='English'):
+    def translation_pairs(self, ignore=None, base="English"):
         """DEPRECATED: Iterate through translation pairs in this tab.
 
         This function only works for 'survey', 'choices' and
@@ -160,9 +155,9 @@ class Xlstab(Worksheet):
         if ignore is None:
             ignore = []
         translate_columns = ()
-        if self.name == 'survey':
+        if self.name == "survey":
             translate_columns = self.SURVEY_TRANSLATIONS
-        elif self.name in ('choices', 'external_choices'):
+        elif self.name in ("choices", "external_choices"):
             translate_columns = self.CHOICES_TRANSLATIONS
         for col in translate_columns:
             found = [h for h in self.column_headers() if h.startswith(col)]
@@ -171,18 +166,18 @@ class Xlstab(Worksheet):
             base_col = next(gen, None)
             for pair in self.column_pairs(keep, base_col, start=1):
                 src, other = pair
-                src_lang = self.get_lang(src['header'])
-                src['language'] = src_lang
-                other_lang = self.get_lang(other['header'])
-                other['language'] = other_lang
+                src_lang = self.get_lang(src["header"])
+                src["language"] = src_lang
+                other_lang = self.get_lang(other["header"])
+                other["language"] = other_lang
                 if src_lang in ignore or other_lang in ignore:
                     continue
-                if src['cell'].is_blank() or other['cell'].is_blank():
+                if src["cell"].is_blank() or other["cell"].is_blank():
                     continue
                 yield src, other
 
     # pylint: disable=too-many-locals
-    def lazy_translation_pairs(self, ignore=None, base='English'):
+    def lazy_translation_pairs(self, ignore=None, base="English"):
         """Iterate through translation pairs in this tab.
 
         This method is based on finding things of the form
@@ -205,24 +200,24 @@ class Xlstab(Worksheet):
         if ignore is None:
             ignore = []
         headers = self.column_headers()
-        ending = '::{}'.format(base)
+        ending = "::{}".format(base)
         found = [h for h in headers if h.endswith(ending)]
         for col in found:
-            start, _ = col.rsplit(sep='::', maxsplit=1)
+            start, _ = col.rsplit(sep="::", maxsplit=1)
             others = [h for h in headers if h.startswith(start) and h != col]
             for pair in self.column_pairs(others, col, start=1):
                 src, other = pair
-                src_lang = self.get_lang(src['header'])
-                src['language'] = src_lang
-                other_lang = self.get_lang(other['header'])
-                other['language'] = other_lang
+                src_lang = self.get_lang(src["header"])
+                src["language"] = src_lang
+                other_lang = self.get_lang(other["header"])
+                other["language"] = other_lang
                 if src_lang in ignore or other_lang in ignore:
                     continue
-                if src['cell'].is_blank() and other['cell'].is_blank():
+                if src["cell"].is_blank() and other["cell"].is_blank():
                     continue
                 yield src, other
 
-    def easy_translation_pairs(self, ignore=None, base='English'):
+    def easy_translation_pairs(self, ignore=None, base="English"):
         """Iterate through translation pairs in this tab.
 
         This method is based on finding a column titled "English", and then
@@ -243,16 +238,16 @@ class Xlstab(Worksheet):
             ignore = []
         try:
             base = self.column_headers().index(base)
-            ncol = self.ncol()
+            ncol = self.ncol
             indices = range(base, ncol)
             for pair in self.column_pairs(indices=indices, start=1):
                 src, other = pair
-                if src['header'] in ignore or other['header'] in ignore:
+                if src["header"] in ignore or other["header"] in ignore:
                     continue
-                if src['cell'].is_blank() and other['cell'].is_blank():
+                if src["cell"].is_blank() and other["cell"].is_blank():
                     continue
-                src['language'] = src['header']
-                other['language'] = other['header']
+                src["language"] = src["header"]
+                other["language"] = other["header"]
                 yield src, other
         except ValueError:
             # Base language not found. No translations
@@ -269,8 +264,8 @@ class Xlstab(Worksheet):
             The language found or None if '::' is not present
         """
         lang = None
-        if '::' in header:
-            lang = header.split('::', maxsplit=1)[1]
+        if "::" in header:
+            lang = header.split("::", maxsplit=1)[1]
         return lang
 
     def sheet_languages(self):
@@ -286,9 +281,9 @@ class Xlstab(Worksheet):
             it is found.
         """
         translate_columns = ()
-        if self.name == 'survey':
+        if self.name == "survey":
             translate_columns = self.SURVEY_TRANSLATIONS
-        elif self.name in ('choices', 'external_choices'):
+        elif self.name in ("choices", "external_choices"):
             translate_columns = self.CHOICES_TRANSLATIONS
         headers = self.column_headers()
         languages = set()
@@ -307,8 +302,9 @@ class Xlstab(Worksheet):
         return sorted_languages
 
     # pylint: disable=too-many-arguments
-    def merge_translations(self, translations, ignore=None, base='English',
-                           carry=False, no_diverse=False):
+    def merge_translations(
+        self, translations, ignore=None, base="English", carry=False, no_diverse=False
+    ):
         """Merge translations from a TranslationDict.
 
         By the end of this method call, this worksheet will have translations
@@ -338,33 +334,33 @@ class Xlstab(Worksheet):
                 multiple translations.
         """
         for src, other in self.lazy_translation_pairs(ignore, base):
-            src_text = str(src['cell'])
-            if src_text == '':
+            src_text = str(src["cell"])
+            if src_text == "":
                 continue
-            other_text = str(other['cell'])
-            other_lang = other['language']
+            other_text = str(other["cell"])
+            other_lang = other["language"]
             if no_diverse:
                 count_unique = translations.count_unique_translations(
-                    src_text, other_lang)
+                    src_text, other_lang
+                )
                 if count_unique > 1:
-                    other['cell'].highlight = 'HL_YELLOW'
+                    other["cell"].highlight = "HL_YELLOW"
                     continue
             try:
-                translated = translations.get_numbered_translation(src_text,
-                                                                   other_lang)
-                other['cell'].value = translated
+                translated = translations.get_numbered_translation(src_text, other_lang)
+                other["cell"].value = translated
                 if src_text == translated:
-                    other['cell'].highlight = 'HL_ORANGE'
-                elif translated != other_text and other_text == '':
-                    other['cell'].highlight = 'HL_GREY'
+                    other["cell"].highlight = "HL_ORANGE"
+                elif translated != other_text and other_text == "":
+                    other["cell"].highlight = "HL_GREY"
                 elif translated != other_text:  # and other_text != ''
-                    other['cell'].highlight = 'HL_BLUE'
+                    other["cell"].highlight = "HL_BLUE"
             except KeyError:
-                if other['cell'].is_blank():
+                if other["cell"].is_blank():
                     if carry:
-                        other['cell'].value = src_text
-                        other['cell'].highlight = 'HL_ORANGE'
+                        other["cell"].value = src_text
+                        other["cell"].highlight = "HL_ORANGE"
                     else:
-                        other['cell'].highlight = 'HL_RED'
+                        other["cell"].highlight = "HL_RED"
                 else:
-                    other['cell'].highlight = 'HL_GREEN'
+                    other["cell"].highlight = "HL_GREEN"

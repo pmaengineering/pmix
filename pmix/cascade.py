@@ -21,7 +21,7 @@ import argparse
 
 import xlsxwriter
 
-from pmix.workbook import Workbook
+from pmix import Workbook
 from pmix.error import CascadeError
 
 
@@ -79,12 +79,12 @@ class Cascade:
     def parse_identifiers(self):
         """Parse the identifiers from the column headers."""
         for col in self.column_names:
-            this_split = col.split('|', 1)
+            this_split = col.split("|", 1)
             try:
                 # e.g. level1|label::English
                 identifier = this_split[0]
-                has_name = this_split[1] == 'name'
-                has_label = this_split[1] == 'label'
+                has_name = this_split[1] == "name"
+                has_label = this_split[1] == "label"
                 if identifier in self.identifiers:
                     had_name, had_label = self.identifiers[identifier]
                     new_name = had_name or has_name
@@ -107,11 +107,11 @@ class Cascade:
             has_name, has_label = self.identifiers[i]
             name = None
             if has_name:
-                name_col = '{}|{}'.format(i, 'name')
+                name_col = "{}|{}".format(i, "name")
                 name = str(row[self.column_names.index(name_col)])
             label = None
             if has_label:
-                label_col = '{}|{}'.format(i, 'label')
+                label_col = "{}|{}".format(i, "label")
                 label = str(row[self.column_names.index(label_col)])
             node = Cascade.Node(name=name, label=label, identifier=i)
             root.add_last(node)
@@ -188,7 +188,7 @@ class Cascade:
         """
         wb = xlsxwriter.Workbook(path)
         highlight = wb.add_format()
-        highlight.set_bg_color('#FDFD96')
+        highlight.set_bg_color("#FDFD96")
         ws = wb.add_worksheet("cascade")
         for i, node in enumerate(self.data):
             if i == 0:
@@ -225,8 +225,8 @@ class Cascade:
                 next_item = self.queue.pop(0)
                 self.queue.extend(next_item.children)
                 return next_item
-            except IndexError:
-                raise StopIteration
+            except IndexError as err:
+                raise StopIteration from err
 
         def levels(self):
             """Yield the levels of the iterator."""
@@ -321,19 +321,23 @@ class Cascade:
 
 def cascade_cli():
     """Run the command-line interface for this module."""
-    prog_desc = 'Make a cascading select for geographic identifiers'
+    prog_desc = "Make a cascading select for geographic identifiers"
     parser = argparse.ArgumentParser(description=prog_desc)
 
-    file_help = 'Path to source XLSForm containing geographic identifiers.'
-    parser.add_argument('xlsxfile', help=file_help)
+    file_help = "Path to source XLSForm containing geographic identifiers."
+    parser.add_argument("xlsxfile", help=file_help)
 
-    sheet_help = ('Supply the worksheet name here. If not, then the first '
-                  'worksheet is assumed.')
-    parser.add_argument('-s', '--sheet', help=sheet_help)
+    sheet_help = (
+        "Supply the worksheet name here. If not, then the first "
+        "worksheet is assumed."
+    )
+    parser.add_argument("-s", "--sheet", help=sheet_help)
 
-    out_help = ('Path to write output. If this argument is not supplied, then '
-                'defaults are used.')
-    parser.add_argument('-o', '--outpath', help=out_help)
+    out_help = (
+        "Path to write output. If this argument is not supplied, then "
+        "defaults are used."
+    )
+    parser.add_argument("-o", "--outpath", help=out_help)
 
     args = parser.parse_args()
 
@@ -349,5 +353,5 @@ def cascade_cli():
     print("Successfully saved file to: {}".format(outpath))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cascade_cli()

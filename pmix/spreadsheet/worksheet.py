@@ -4,7 +4,7 @@ import csv
 
 from xlsxwriter.utility import xl_rowcol_to_cell
 
-from pmix.cell import Cell, CellContext
+from pmix.spreadsheet.cell import Cell, CellContext
 from pmix.error import SpreadsheetError
 
 
@@ -38,7 +38,7 @@ class Worksheet:
             self.data = data
         if name is None:
             Worksheet.count += 1
-            self.name = 'sheet' + str(Worksheet.count)
+            self.name = "sheet" + str(Worksheet.count)
         else:
             self.name = name
 
@@ -62,7 +62,7 @@ class Worksheet:
         if self:
             lengths = {len(line) for line in self}
             if len(lengths) > 1:
-                msg = 'Worksheet has inconsistent column counts'
+                msg = "Worksheet has inconsistent column counts"
                 raise SpreadsheetError(msg)
             length = next(iter(lengths))
         return length
@@ -87,8 +87,8 @@ class Worksheet:
                     cell = Cell.from_cell(col, datemode, stripstr)
                 except TypeError as err:
                     xl_name = xl_rowcol_to_cell(i, j)
-                    msg = f'Error sheet {sheet.name} in cell {xl_name}: {err!s}'
-                    raise TypeError(msg)
+                    msg = f"Error sheet {sheet.name} in cell {xl_name}: {err!s}"
+                    raise TypeError(msg) from err
                 cur_row.append(cell)
             worksheet.data.append(cur_row)
         return worksheet
@@ -158,18 +158,13 @@ class Worksheet:
                 continue
             # TODO: Row / Col / Header information is in Cell.context now.
             base_data = {
-                'row': i,
-                'col': base,
-                'header': headers[base],
-                'cell': row[base]
+                "row": i,
+                "col": base,
+                "header": headers[base],
+                "cell": row[base],
             }
             for j in indices:
-                other_data = {
-                    'row': i,
-                    'col': j,
-                    'header': headers[j],
-                    'cell': row[j]
-                }
+                other_data = {"row": i, "col": j, "header": headers[j], "cell": row[j]}
                 yield base_data, other_data
 
     def column_key(self, key):
@@ -191,8 +186,8 @@ class Worksheet:
                 try:
                     col = column_headers.index(item)
                     result.append(col)
-                except ValueError:
-                    raise KeyError(item)
+                except ValueError as err:
+                    raise KeyError(item) from err
             elif isinstance(item, int):
                 result.append(item)
             else:
@@ -244,7 +239,7 @@ class Worksheet:
             strings (bool): False if the original value should be written,
                 otherwise the string value of the cell is used.
         """
-        with open(path, 'w', newline='', encoding='utf-8') as csv_file:
+        with open(path, "w", newline="", encoding="utf-8") as csv_file:
             csv_writer = csv.writer(csv_file)
             for row in self:
                 if strings:
@@ -308,7 +303,7 @@ class Worksheet:
 
     def __str__(self):
         """Return string representation of the Worksheet."""
-        msg = f'<{self.name!r}: {self.data!r}>'
+        msg = f"<{self.name!r}: {self.data!r}>"
         return msg
 
     def __repr__(self):

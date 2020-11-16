@@ -4,11 +4,11 @@ import logging
 import xlsxwriter
 
 from pmix import utils
-import pmix.workbook
-import pmix.xlsform
+from pmix import Workbook
+from pmix import Xlsform
 
 
-LOG = logging.getLogger('pmix.verbiage')
+LOG = logging.getLogger("pmix.verbiage")
 
 
 class TranslationSession:
@@ -53,7 +53,7 @@ class TranslationDict:
     lookup functions depending on a key and a language.
     """
 
-    def __init__(self, src=None, base='English'):
+    def __init__(self, src=None, base="English"):
         """Initialize a translation dictionary.
 
         Args:
@@ -83,9 +83,9 @@ class TranslationDict:
             obj: A source object, either Xlsform or Workbook
             correct (bool): Whether or not the input file is treated as correct
         """
-        if isinstance(obj, pmix.xlsform.Xlsform):
+        if isinstance(obj, Xlsform):
             self.translations_from_xlsform(obj, correct)
-        elif isinstance(obj, pmix.workbook.Workbook):
+        elif isinstance(obj, Workbook):
             self.translations_from_workbook(obj, correct)
 
     def translations_from_xlsform(self, xlsform, correct=False):
@@ -100,14 +100,14 @@ class TranslationDict:
         for xlstab in xlsform:
             for pair in xlstab.lazy_translation_pairs(base=self.base):
                 first, second = pair
-                first_cell = first['cell']
-                second_cell = second['cell']
+                first_cell = first["cell"]
+                second_cell = second["cell"]
                 if first_cell.is_blank() or second_cell.is_blank():
                     continue
                 src = str(first_cell)
-                language = second['language']
-                second['file'] = xlsform.filename
-                second['sheet'] = xlstab.name
+                language = second["language"]
+                second["file"] = xlsform.filename
+                second["sheet"] = xlstab.name
                 self.add_translation(src, second, language, correct)
 
     def translations_from_workbook(self, workbook, correct=False):
@@ -128,14 +128,14 @@ class TranslationDict:
                 indices = range(base, ncol)
                 for pair in worksheet.column_pairs(indices=indices, start=1):
                     first, second = pair
-                    first_cell = first['cell']
-                    second_cell = second['cell']
+                    first_cell = first["cell"]
+                    second_cell = second["cell"]
                     if first_cell.is_blank() or second_cell.is_blank():
                         continue
                     src = str(first_cell)
                     lang = second_cell.header
-                    second['file'] = workbook.filename
-                    second['sheet'] = worksheet.name
+                    second["file"] = workbook.filename
+                    second["sheet"] = worksheet.name
                     self.add_translation(src, second, lang, correct)
             except ValueError:
                 # TODO: possibly match text::English to other columns
@@ -158,13 +158,12 @@ class TranslationDict:
             correct (bool): Whether or not the input file is treated as correct
         """
         cleaned_src = utils.td_clean_string(src)
-        cleaned_other = utils.td_clean_string(str(other['cell']))
-        other['translation'] = cleaned_other
+        cleaned_other = utils.td_clean_string(str(other["cell"]))
+        other["translation"] = cleaned_other
         if not correct and cleaned_src in self.correct:
             # Currently not a correct translation, but we have correct
             return
-        if correct and cleaned_src not in self.correct and cleaned_src in \
-                self.data:
+        if correct and cleaned_src not in self.correct and cleaned_src in self.data:
             # Remove the old, non-correct translation
             self.data.pop(cleaned_src, None)
         if correct:
@@ -196,13 +195,12 @@ class TranslationDict:
         """
         this_dict = self.data[src]
         all_found_data = this_dict[lang]
-        all_found = [other['translation'] for other in all_found_data]
+        all_found = [other["translation"] for other in all_found_data]
         unique_all_found = set(all_found)
         if len(unique_all_found) > 1:
             self.session.multiple_translations(src, lang, unique_all_found)
         max_count = max((all_found.count(s) for s in unique_all_found))
-        first_max = next((s for s in all_found if all_found.count(s) ==
-                          max_count))
+        first_max = next((s for s in all_found if all_found.count(s) == max_count))
         return first_max
 
     def count_unique_translations(self, src, lang):
@@ -228,7 +226,7 @@ class TranslationDict:
             if lang in all_src_data:
                 # Collect all the unique translation strings
                 translations = all_src_data[lang]
-                all_found = [other['translation'] for other in translations]
+                all_found = [other["translation"] for other in translations]
                 unique_all_found = set(all_found)
                 # Set the return value to the size of the set
                 count_unique = len(unique_all_found)
@@ -256,7 +254,7 @@ class TranslationDict:
             if lang in all_src_data:
                 # Collect all the unique translation strings
                 translations = all_src_data[lang]
-                all_found = [other['translation'] for other in translations]
+                all_found = [other["translation"] for other in translations]
                 unique_all_found = set(all_found)
                 # Set the return value to the size of the set
                 unique = sorted(list(unique_all_found))
@@ -332,15 +330,15 @@ class TranslationDict:
         """
         wb = xlsxwriter.Workbook(path)
         red_background = wb.add_format()
-        red_background.set_bg_color('#FFAAA5')
-        ws = wb.add_worksheet('translations')
+        red_background.set_bg_color("#FFAAA5")
+        ws = wb.add_worksheet("translations")
         other_languages = sorted(list(self.get_languages()))
         all_languages = [self.base] + other_languages
         if others:
             for other in others:
                 if other not in all_languages:
                     all_languages.append(other)
-        header_row = ['text::{}'.format(lang) for lang in all_languages]
+        header_row = ["text::{}".format(lang) for lang in all_languages]
         ws.write_row(0, 0, header_row)
         for i, k in enumerate(self.data):
             ws.write(i + 1, 0, k)
@@ -350,7 +348,7 @@ class TranslationDict:
                     ws.write(i + 1, j + 1, translation)
                 except KeyError:
                     # Missing information is highlighted
-                    ws.write(i + 1, j + 1, '', red_background)
+                    ws.write(i + 1, j + 1, "", red_background)
         wb.close()
 
     # pylint: disable=too-many-locals
@@ -363,10 +361,10 @@ class TranslationDict:
         """
         wb = xlsxwriter.Workbook(path)
         red_background = wb.add_format()
-        red_background.set_bg_color('#FFAAA5')
-        ws = wb.add_worksheet('translations')
+        red_background.set_bg_color("#FFAAA5")
+        ws = wb.add_worksheet("translations")
         all_languages = [self.base, language]
-        header_row = ['text::{}'.format(lang) for lang in all_languages]
+        header_row = ["text::{}".format(lang) for lang in all_languages]
         ws.write_row(0, 0, header_row)
         dups = []
         for key in self.data:

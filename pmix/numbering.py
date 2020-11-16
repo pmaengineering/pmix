@@ -61,14 +61,14 @@ import os.path
 import re
 
 from pmix import utils
-from pmix.xlsform import Xlsform
+from pmix import Xlsform
 
 
-DEFAULT_NUM_COL = 'N'
-LOWER_LETTERS = tuple('abcdefghijklmnopqrstuvwxyz')
-UPPER_LETTERS = tuple('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-ROMAN_NUMERALS = ('i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x')
-PUNCTUATION = tuple(':-)._')
+DEFAULT_NUM_COL = "N"
+LOWER_LETTERS = tuple("abcdefghijklmnopqrstuvwxyz")
+UPPER_LETTERS = tuple("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+ROMAN_NUMERALS = ("i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x")
+PUNCTUATION = tuple(":-)._")
 
 
 class NumberingContext:
@@ -98,17 +98,17 @@ class NumberingContext:
 
     def parse_cmd(self, cmd):
         """Parse a command in this miniature language."""
-        if cmd.startswith('^'):
+        if cmd.startswith("^"):
             self.increment(cmd)
-        elif cmd.startswith('<'):
+        elif cmd.startswith("<"):
             self.lookback(cmd)
-        elif cmd.startswith('#'):
+        elif cmd.startswith("#"):
             self.sticky(cmd)
-        elif cmd.startswith('~'):
+        elif cmd.startswith("~"):
             self.silent(cmd)
-        elif cmd.startswith('>'):
+        elif cmd.startswith(">"):
             raise RuntimeError('">" not yet implemented')
-        elif cmd.startswith('*'):
+        elif cmd.startswith("*"):
             self.resume(cmd)
         elif not cmd:
             self.blank()
@@ -124,13 +124,13 @@ class NumberingContext:
 
     def lookback(self, cmd):
         """Parse a lookback command and add the correct number."""
-        increment_pos = cmd.find('^')
+        increment_pos = cmd.find("^")
         if increment_pos < 0:
-            increment = ''
+            increment = ""
         else:
             increment = cmd[increment_pos:]
             cmd = cmd[:increment_pos]
-        if cmd == '<':
+        if cmd == "<":
             lookback = 1
         else:
             lookback = int(cmd[1:])
@@ -155,7 +155,7 @@ class NumberingContext:
 
     def resume(self, cmd):
         """Resume a previous series."""
-        if cmd[1] in '<^':
+        if cmd[1] in "<^":
             tmp = self.current_series
             self.current_series = self.prev_series
             self.prev_series = tmp
@@ -190,7 +190,7 @@ class NumberingContext:
             if item:
                 yield item.to_string()
             else:
-                yield ''
+                yield ""
 
     def filtered_iter(self):
         """Return an iterator that skips the non-number entries."""
@@ -219,12 +219,12 @@ class Numbering:
       + 201a.i
     """
 
-    letter_re = r'^[a-zA-Z]$'
-    number_re = r'^([^\s\d~<>@^#*]*)(\d+)$'
-    punc_re = r'([:\-)._])'
-    ext_letter_re = r'^([^\s\d~<>@^#*]*)(\d+){}?([a-z])$'.format(punc_re)
-    roman_re = r'(i{1,3}|iv|v|vi{1,3}|ix|x)'
-    ext_roman_re = r'^([^\s\d~<>@^#*]*)(\d+){}?([a-z]){}{}$'
+    letter_re = r"^[a-zA-Z]$"
+    number_re = r"^([^\s\d~<>@^#*]*)(\d+)$"
+    punc_re = r"([:\-)._])"
+    ext_letter_re = r"^([^\s\d~<>@^#*]*)(\d+){}?([a-z])$".format(punc_re)
+    roman_re = r"(i{1,3}|iv|v|vi{1,3}|ix|x)"
+    ext_roman_re = r"^([^\s\d~<>@^#*]*)(\d+){}?([a-z]){}{}$"
     ext_roman_re = ext_roman_re.format(punc_re, punc_re, roman_re)
 
     letter_prog = re.compile(letter_re)
@@ -250,13 +250,13 @@ class Numbering:
     # pylint: disable=attribute-defined-outside-init
     def reset(self):
         """Set all components of the numbering to empty string."""
-        self.letter = ''
-        self.leader = ''
-        self.number = ''
-        self.punc0 = ''
-        self.lower = ''
-        self.punc1 = ''
-        self.roman = ''
+        self.letter = ""
+        self.leader = ""
+        self.number = ""
+        self.punc0 = ""
+        self.lower = ""
+        self.punc1 = ""
+        self.roman = ""
 
     def set(self, numbering):
         """Take input numbering and break apart incrementable components."""
@@ -287,18 +287,18 @@ class Numbering:
             raise ValueError(numbering)
 
         if self.punc0 is None:
-            self.punc0 = ''
+            self.punc0 = ""
 
     def increment(self, cmd):
         """Increment a number based on an increment command."""
         sub_cmds = list(cmd)
-        if sub_cmds.pop(0) != '^':
+        if sub_cmds.pop(0) != "^":
             msg = 'Bad increment "{}". Must start with "^"'.format(cmd)
             raise TypeError(msg)
         for item in sub_cmds:
             if item.isdigit():
                 self.increase_number(item)
-            elif item in ('i', 'v', 'x'):
+            elif item in ("i", "v", "x"):
                 self.increase_roman(item)
             elif self.letter and item.isalpha():
                 self.increase_letter(item)
@@ -333,13 +333,13 @@ class Numbering:
         """
         increment = int(increment)
         new_number = int(self.number) + increment
-        if self.number.startswith('0'):
+        if self.number.startswith("0"):
             self.number = str(new_number).zfill(len(self.number))
         else:
             self.number = str(new_number)
 
-        self.lower = ''
-        self.roman = ''
+        self.lower = ""
+        self.roman = ""
 
     def increase_lower(self, lower):
         """Increase an lower by a specified amount.
@@ -352,7 +352,7 @@ class Numbering:
         new_lower = LOWER_LETTERS[cur_index + delta_index]
         self.lower = new_lower
 
-        self.roman = ''
+        self.roman = ""
 
     def increase_roman(self, roman):
         """Increase an roman by a specified amount.
@@ -361,10 +361,10 @@ class Numbering:
             roman (str): A single roman numeral
         """
         if not self.lower:
-            msg = 'Cannot increase roman numeral without lower case letter'
+            msg = "Cannot increase roman numeral without lower case letter"
             raise ValueError(msg)
         if not self.punc1:
-            self.punc1 = '.'
+            self.punc1 = "."
         cur_index = ROMAN_NUMERALS.index(self.roman) if self.roman else -1
         delta_index = ROMAN_NUMERALS.index(roman) + 1
         new_roman = ROMAN_NUMERALS[cur_index + delta_index]
@@ -373,7 +373,7 @@ class Numbering:
     def to_string(self):
         """Convert to string for use in numbering."""
         if self.silent:
-            return ''
+            return ""
         return str(self)
 
     def __str__(self):
@@ -384,7 +384,7 @@ class Numbering:
             if self.roman:
                 expr += self.punc1 + self.roman
         if self.silent:
-            expr = '~' + expr
+            expr = "~" + expr
         return expr
 
     def __repr__(self):
@@ -416,12 +416,12 @@ def compute_prepend_numbers(inpath, col, outpath, rm_on_empty=False):
 
     """
     xlsform = Xlsform(inpath)
-    survey = xlsform['survey']
+    survey = xlsform["survey"]
     context = NumberingContext()
     for cell in survey.column(col):
         context.next(str(cell))
     for i, header in enumerate(survey.column_headers()):
-        if header.startswith('label') or header.startswith('ppp_label'):
+        if header.startswith("label") or header.startswith("ppp_label"):
             header_skipped = False
             for num, cell in zip(context.string_iter(), survey.column(i)):
                 if not header_skipped:
@@ -430,14 +430,14 @@ def compute_prepend_numbers(inpath, col, outpath, rm_on_empty=False):
                 if num:
                     old_text = str(cell)
                     cell_num, the_rest = utils.td_split_text(old_text)
-                    new_text = '. '.join((num, the_rest))
+                    new_text = ". ".join((num, the_rest))
                     cell.value = new_text
                     if not cell_num:
                         # Highlight yellow for adding a number
                         cell.set_highlight()
                     elif new_text != old_text:
                         # Highlight orange for changing a number
-                        cell.set_highlight('HL_ORANGE')
+                        cell.set_highlight("HL_ORANGE")
                 elif cell and rm_on_empty:
                     cell_num, the_rest = utils.td_split_text(str(cell))
                     if cell_num:
@@ -448,23 +448,25 @@ def compute_prepend_numbers(inpath, col, outpath, rm_on_empty=False):
 
 def numbering_cli():
     """Run the command line interface for this module."""
-    prog_desc = 'Update numbering in an ODK form'
+    prog_desc = "Update numbering in an ODK form"
     parser = argparse.ArgumentParser(description=prog_desc)
-    file_help = 'Path to source XLSForm.'
-    parser.add_argument('xlsxfile', help=file_help)
-    numbering_help = ('Compute numbering based on a column in the "survey" '
-                      'tab. If this option string is not given, '
-                      'then a default of "N" is assumed for the column '
-                      'header. This program updates label and ppp_label '
-                      'columns.')
-    parser.add_argument('-n', '--numbering', help=numbering_help)
-    out_help = ('Path to write output. If this argument is not supplied, then '
-                'defaults are used.')
-    parser.add_argument('-o', '--outpath', help=out_help)
-    rm_help = ('Remove a number that pre-exists in a label if numbering '
-               'column is blank.')
-    parser.add_argument('-r', '--rm_on_empty', action='store_true',
-                        help=rm_help)
+    file_help = "Path to source XLSForm."
+    parser.add_argument("xlsxfile", help=file_help)
+    numbering_help = (
+        'Compute numbering based on a column in the "survey" '
+        "tab. If this option string is not given, "
+        'then a default of "N" is assumed for the column '
+        "header. This program updates label and ppp_label "
+        "columns."
+    )
+    parser.add_argument("-n", "--numbering", help=numbering_help)
+    out_help = (
+        "Path to write output. If this argument is not supplied, then "
+        "defaults are used."
+    )
+    parser.add_argument("-o", "--outpath", help=out_help)
+    rm_help = "Remove a number that pre-exists in a label if numbering column is blank."
+    parser.add_argument("-r", "--rm_on_empty", action="store_true", help=rm_help)
     args = parser.parse_args()
 
     col = DEFAULT_NUM_COL
@@ -472,12 +474,12 @@ def numbering_cli():
         col = args.numbering
     filename, extension = os.path.splitext(args.xlsxfile)
     if args.outpath is None:
-        outpath = os.path.join(filename+'-num'+extension)
+        outpath = os.path.join(filename + "-num" + extension)
     else:
         outpath = args.outpath
     compute_prepend_numbers(args.xlsxfile, col, outpath)
     print('Renumbered labels and wrote file to "{}"'.format(outpath))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     numbering_cli()

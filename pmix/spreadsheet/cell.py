@@ -1,8 +1,8 @@
 """Module for Cell class."""
 import datetime
-import xlrd
 
-import pmix.utils
+import xlrd
+from xlsxwriter.utility import xl_rowcol_to_cell
 
 
 class CellContext:
@@ -16,8 +16,9 @@ class CellContext:
         row: The
     """
 
-    def __init__(self, filename: str, sheet: str, row: int, column: int,
-                 column_header: str):
+    def __init__(
+        self, filename: str, sheet: str, row: int, column: int, column_header: str
+    ):
         """Initialize a cell context."""
         self.filename = filename
         self.sheet = sheet
@@ -29,7 +30,7 @@ class CellContext:
         """Get the Excel cell name for this cell."""
         if self.row < 0 or self.column < 0:
             return ""
-        return pmix.utils.xl_rowcol_to_cell(self.row, self.column)
+        return xl_rowcol_to_cell(self.row, self.column)
 
     @classmethod
     def empty_context(cls):
@@ -41,9 +42,11 @@ class CellContext:
 
     def __repr__(self):
         """Get a representation of this object."""
-        return (f"CellContext(filename={self.filename!r}, sheet={self.sheet!r}, "
-                f"row={self.row!r}, column={self.column!r}, "
-                f"column_header={self.column_header!r})")
+        return (
+            f"CellContext(filename={self.filename!r}, sheet={self.sheet!r}, "
+            f"row={self.row!r}, column={self.column!r}, "
+            f"column_header={self.column_header!r})"
+        )
 
 
 class CellError:
@@ -68,11 +71,11 @@ class CellError:
 
         We ignore errors because they do not add useful information.
         """
-        return ''
+        return ""
 
     def __repr__(self):
         """Get a representation of this object."""
-        return f'CellError({self.value})'
+        return f"CellError({self.value})"
 
 
 class Cell:
@@ -96,7 +99,7 @@ class Cell:
 
     def is_blank(self):
         """Test whether cell is blank."""
-        return str(self) == ''
+        return str(self) == ""
 
     def is_error(self):
         """Test wheter cell is an error."""
@@ -111,11 +114,11 @@ class Cell:
         """
         if whitespace:
             return str(self) == str(other)
-        this_str = ''.join(str(self).split())
-        other_str = ''.join(str(other).split())
+        this_str = "".join(str(self).split())
+        other_str = "".join(str(other).split())
         return this_str == other_str
 
-    def set_highlight(self, color='HL_YELLOW'):
+    def set_highlight(self, color="HL_YELLOW"):
         """Highlight this cell.
 
         Args:
@@ -140,12 +143,12 @@ class Cell:
     def __str__(self):
         """Return unicode representation of cell."""
         if self.value is None:
-            return ''
+            return ""
         return str(self.value)
 
     def __repr__(self):
         """Return a representation of the cell."""
-        msg = '<Cell(value={!r})>'.format(self.value)
+        msg = "<Cell(value={!r})>".format(self.value)
         return msg
 
     @classmethod
@@ -195,7 +198,7 @@ class Cell:
         elif cell.ctype == xlrd.XL_CELL_ERROR:
             value = CellError(cell.value)
         else:
-            msg = 'Unhandled cell found!\nType: {}\nValue: {}'
+            msg = "Unhandled cell found!\nType: {}\nValue: {}"
             msg = msg.format(cell.ctype, cell.value)
             raise TypeError(msg)
         return value

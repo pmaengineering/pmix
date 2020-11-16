@@ -11,7 +11,7 @@ import argparse
 import datetime
 import json
 
-from pmix.xlsform import Xlsform
+from pmix import Xlsform
 
 
 def is_analytics_type(odk_type):
@@ -24,18 +24,18 @@ def is_analytics_type(odk_type):
         Return true if and only if odk_type is good for analytics
     """
     bad_types = (
-        'type',
-        'calculate',
-        'hidden',
-        'start',
-        'end',
-        'begin ',
-        'deviceid',
-        'simserial',
-        'phonenumber'
+        "type",
+        "calculate",
+        "hidden",
+        "start",
+        "end",
+        "begin ",
+        "deviceid",
+        "simserial",
+        "phonenumber",
     )
     bad = any((odk_type.startswith(bad) for bad in bad_types))
-    return not bad and odk_type != ''
+    return not bad and odk_type != ""
 
 
 def get_filtered_survey_names(xlsform):
@@ -47,10 +47,9 @@ def get_filtered_survey_names(xlsform):
     Returns:
         A list of ODK names to use in analytics.
     """
-    odk_type = xlsform['survey'].column('type')
-    odk_name = xlsform['survey'].column('name')
-    filtered = [str(n) for t, n in zip(odk_type, odk_name) if
-                is_analytics_type(str(t))]
+    odk_type = xlsform["survey"].column("type")
+    odk_name = xlsform["survey"].column("name")
+    filtered = [str(n) for t, n in zip(odk_type, odk_name) if is_analytics_type(str(t))]
     return filtered
 
 
@@ -67,29 +66,29 @@ def get_useful_tags(xlsform):
         A list of ODK tags to track in analytics.
     """
     useful_tags = (
-        'your_name',
-        'name_typed',
-        'level1',
-        'level2',
-        'level3',
-        'level4',
-        'EA',
-        'structure',
-        'household',
-        'level1_unlinked',
-        'level2_unlinked',
-        'level3_unlinked',
-        'level4_unlinked',
-        'EA_unlinked',
-        'facility_type',
-        'deviceid',
-        'start',
-        'end',
-        'HHQ_result',
-        'FRS_result',
-        'SDP_result'
+        "your_name",
+        "name_typed",
+        "level1",
+        "level2",
+        "level3",
+        "level4",
+        "EA",
+        "structure",
+        "household",
+        "level1_unlinked",
+        "level2_unlinked",
+        "level3_unlinked",
+        "level4_unlinked",
+        "EA_unlinked",
+        "facility_type",
+        "deviceid",
+        "start",
+        "end",
+        "HHQ_result",
+        "FRS_result",
+        "SDP_result",
     )
-    odk_name = set(str(c) for c in xlsform['survey'].column('name'))
+    odk_name = set(str(c) for c in xlsform["survey"].column("name"))
     keepers = [t for t in useful_tags if t in odk_name]
     return keepers
 
@@ -103,12 +102,12 @@ def analytics_obj(xlsxfile):
     tags = get_useful_tags(xls)
     today = str(datetime.date.today())
     obj = {
-        'form_id': form_id,
-        'form_title': form_title,
-        'prompts': prompts,
-        'tags': tags,
-        'created': today,
-        '~comment': 'END {}'.format(form_id)
+        "form_id": form_id,
+        "form_title": form_title,
+        "prompts": prompts,
+        "tags": tags,
+        "created": today,
+        "~comment": "END {}".format(form_id),
     }
     return obj
 
@@ -125,27 +124,29 @@ def prettify(obj):
 
 def analytics_cli():
     """Run the command line interface for this module."""
-    prog_desc = 'Help facilitate analytics by extracting useful information.'
+    prog_desc = "Help facilitate analytics by extracting useful information."
     parser = argparse.ArgumentParser(description=prog_desc)
 
-    file_help = 'One or more paths to source XLSForms.'
-    parser.add_argument('xlsxfile', nargs='+', help=file_help)
+    file_help = "One or more paths to source XLSForms."
+    parser.add_argument("xlsxfile", nargs="+", help=file_help)
 
-    out_help = ('Path to write output. If this argument is not supplied, then '
-                'result is sent to standard out.')
-    parser.add_argument('-o', '--outpath', help=out_help)
+    out_help = (
+        "Path to write output. If this argument is not supplied, then "
+        "result is sent to standard out."
+    )
+    parser.add_argument("-o", "--outpath", help=out_help)
 
     args = parser.parse_args()
 
     objs = get_analytics_objs(args.xlsxfile)
     result = prettify(objs)
     if args.outpath:
-        with open(args.outpath, mode='w', encoding='utf-8') as out:
+        with open(args.outpath, mode="w", encoding="utf-8") as out:
             out.write(result)
         print('Wrote analytics file to "{}"'.format(args.outpath))
     else:
         print(result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     analytics_cli()

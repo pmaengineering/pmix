@@ -36,16 +36,28 @@ import os.path
 
 from xlsxwriter.utility import xl_rowcol_to_cell
 
-import pmix.workbook
+from pmix import Workbook
 
 
-CellDiff = namedtuple('CellDiff', ['cell_a', 'cell_b', 'row_a', 'col_a',
-                                   'row_b', 'col_b', 'row_key', 'col_key'])
+CellDiff = namedtuple(
+    "CellDiff",
+    ["cell_a", "cell_b", "row_a", "col_a", "row_b", "col_b", "row_key", "col_key"],
+)
 
 
-IndexedVenn = namedtuple('IndexedVenn', ['common_a', 'common_a_dup', 'a_not_b',
-                                         'a_to_b', 'common_b', 'common_b_dup',
-                                         'b_not_a', 'b_to_a'])
+IndexedVenn = namedtuple(
+    "IndexedVenn",
+    [
+        "common_a",
+        "common_a_dup",
+        "a_not_b",
+        "a_to_b",
+        "common_b",
+        "common_b_dup",
+        "b_not_a",
+        "b_to_a",
+    ],
+)
 
 
 def indexed_venn(seq1, seq2):
@@ -89,6 +101,7 @@ def indexed_venn(seq1, seq2):
             else:
                 a_not_b.append((i, item))
         return common_a, common_a_dup, a_not_b, a_to_b
+
     seq_1_info = build_indexed_a_b(seq1, seq2)
     seq_2_info = build_indexed_a_b(seq2, seq1)
 
@@ -117,9 +130,9 @@ class XlsDiff:
     """
 
     sheet_diff_key = {
-        'survey': ['type', 'name'],
-        'choices': ['list_name', 'name'],
-        'external_choices': ['list_name', 'name']
+        "survey": ["type", "name"],
+        "choices": ["list_name", "name"],
+        "external_choices": ["list_name", "name"],
     }
 
     def __init__(self, base, new, simple=True, **kwargs):
@@ -163,8 +176,8 @@ class XlsDiff:
             simple (bool): True if this should be a simple diff
             **kwargs: Anything in kwargs updates the sheet_diff_key map
         """
-        base_xlsform = pmix.workbook.Workbook(base, stripstr=False)
-        new_xlsform = pmix.workbook.Workbook(new, stripstr=False)
+        base_xlsform = Workbook(base, stripstr=False)
+        new_xlsform = Workbook(new, stripstr=False)
         xls_diff = cls(base_xlsform, new_xlsform, simple, **kwargs)
         return xls_diff
 
@@ -263,8 +276,16 @@ class XlsDiff:
                 new_col = cols_base_to_new[col[0]]
                 new_cell = new_sheet[new_row][new_col]
                 if base_cell != new_cell:
-                    record = CellDiff(base_cell, new_cell, row[0], col[0],
-                                      new_row, new_col, row[1], col[1])
+                    record = CellDiff(
+                        base_cell,
+                        new_cell,
+                        row[0],
+                        col[0],
+                        new_row,
+                        new_col,
+                        row[1],
+                        col[1],
+                    )
                     self.cell_diff[sheet_name].append(record)
 
     def write_diff(self, path):
@@ -296,26 +317,26 @@ class XlsDiff:
         for sheet, venn in self.col_venn.items():
             for col in venn.b_not_a:
                 for cell in self.new[sheet].column(col[0]):
-                    cell.set_highlight('HL_ORANGE')
+                    cell.set_highlight("HL_ORANGE")
             for col in venn.common_b_dup:
                 for cell in self.new[sheet].column(col[0]):
-                    cell.set_highlight('HL_RED')
+                    cell.set_highlight("HL_RED")
 
     def _highlight_rows_new(self):
         """Highlight duplicate, mis-ordered, and new rows."""
         for sheet, venn in self.row_venn.items():
             for row in venn.b_not_a:
                 for cell in self.new[sheet][row[0]]:
-                    cell.set_highlight('HL_ORANGE')
+                    cell.set_highlight("HL_ORANGE")
             for row in venn.common_b_dup:
                 for cell in self.new[sheet][row[0]]:
-                    cell.set_highlight('HL_RED')
+                    cell.set_highlight("HL_RED")
             mapping = sorted((k, v) for (k, v) in venn.a_to_b.items())
             old = 0
             for ind in (a_to_b[1] for a_to_b in mapping):
                 if ind < old:
                     for cell in self.new[sheet][ind]:
-                        cell.set_highlight('HL_GREEN')
+                        cell.set_highlight("HL_GREEN")
                 old = ind
 
     def _highlight_cell_diffs_new(self):
@@ -326,13 +347,13 @@ class XlsDiff:
 
     def report_overview(self):
         """Report an overview of the differences based on indexed Venns."""
-        inner = '{:^20}'.format('Overview of diff')
-        outer = '{:*^60}'.format(inner)
+        inner = "{:^20}".format("Overview of diff")
+        outer = "{:*^60}".format(inner)
         print(outer)
-        print('Base: {}'.format(self.base.file))
-        print('New:  {}'.format(self.new.file))
-        print('*'*60)
-        msg = 'Sheets: {} in common, {} in base not new, {} in new not base'
+        print("Base: {}".format(self.base.file))
+        print("New:  {}".format(self.new.file))
+        print("*" * 60)
+        msg = "Sheets: {} in common, {} in base not new, {} in new not base"
         common = len(self.sheet_venn.common_b)
         common_dup = len(self.sheet_venn.common_b_dup)
         a_not_b = len(self.sheet_venn.a_not_b)
@@ -340,7 +361,7 @@ class XlsDiff:
         msg = msg.format(common + common_dup, a_not_b, b_not_a)
         print(msg)
         for sheet in (i[1] for i in self.sheet_venn.common_b):
-            print(' ---')
+            print(" ---")
             self.report_sheet_overview(sheet)
 
     def report_sheet_overview(self, sheetname):
@@ -350,16 +371,20 @@ class XlsDiff:
             sheetname (str): The name of the sheet to report on. Should be a
                 common sheet name between the base and the new workbook.
         """
-        msg = ('Sheet "{}" columns: {} in common, {} duplicated, {} in base '
-               'not new, {} in new not base')
+        msg = (
+            'Sheet "{}" columns: {} in common, {} duplicated, {} in base '
+            "not new, {} in new not base"
+        )
         common = len(self.col_venn[sheetname].common_b)
         dup = len(self.col_venn[sheetname].common_b_dup)
         a_not_b = len(self.col_venn[sheetname].a_not_b)
         b_not_a = len(self.col_venn[sheetname].b_not_a)
         msg = msg.format(sheetname, common, dup, a_not_b, b_not_a)
         print(msg)
-        msg = ('Sheet "{}" rows: {} in common, {} duplicated, {} in base '
-               'not new, {} in new not base')
+        msg = (
+            'Sheet "{}" rows: {} in common, {} duplicated, {} in base '
+            "not new, {} in new not base"
+        )
         common = len(self.row_venn[sheetname].common_b)
         dup = len(self.row_venn[sheetname].common_b_dup)
         a_not_b = len(self.row_venn[sheetname].a_not_b)
@@ -373,48 +398,50 @@ class XlsDiff:
     # pylint: disable=too-many-locals
     def report_cell_diffs(self):
         """Report cell differences."""
-        inner = '{:^20}'.format('Diff report')
-        outer = '{:*^60}'.format(inner)
+        inner = "{:^20}".format("Diff report")
+        outer = "{:*^60}".format(inner)
         print(outer)
-        print('Base: {}'.format(self.base.file))
-        print('New:  {}'.format(self.new.file))
-        print('*'*60)
+        print("Base: {}".format(self.base.file))
+        print("New:  {}".format(self.new.file))
+        print("*" * 60)
         differ = difflib.Differ()
         for sheet, cell_list in self.cell_diff.items():
             inner = '  Total diffs on "{}": {}  '.format(sheet, len(cell_list))
-            outer = '{:-^60}'.format(inner)
+            outer = "{:-^60}".format(inner)
             print(outer)
             for record in cell_list:
                 base_xl_name = xl_rowcol_to_cell(record.row_a, record.col_a)
                 new_xl_name = xl_rowcol_to_cell(record.row_b, record.col_b)
-                msg = f'>>> Base[{base_xl_name}] != New[{new_xl_name}]'
+                msg = f">>> Base[{base_xl_name}] != New[{new_xl_name}]"
                 print(msg)
                 cell1_lines = str(record.cell_a).splitlines()
                 cell2_lines = str(record.cell_b).splitlines()
                 diff = differ.compare(cell1_lines, cell2_lines)
-                print('\n'.join(diff))
-        inner = '{:^20}'.format('End diff report')
-        outer = '{:*^60}'.format(inner)
+                print("\n".join(diff))
+        inner = "{:^20}".format("End diff report")
+        outer = "{:*^60}".format(inner)
         print(outer)
 
 
 def xlsdiff_cli():
     """Run the command line interface for this module."""
-    prog_desc = 'Create a diff of two Excel workbooks'
+    prog_desc = "Create a diff of two Excel workbooks"
     parser = argparse.ArgumentParser(description=prog_desc)
-    file_help = ('Path to source XLSForm. Two must be supplied. The first is '
-                 'treated as the base, the second is treated as the new file.')
-    parser.add_argument('xlsxfile', help=file_help, nargs=2)
-    reverse_help = 'Reverse the base file and the new file for processing.'
-    parser.add_argument('-r', '--reverse', action='store_true',
-                        help=reverse_help)
-    simple_help = 'Do a simple diff instead of the default ODK diff.'
-    parser.add_argument('-s', '--simple', action='store_true',
-                        help=simple_help)
-    out_help = ('Path to write Excel output. If flag is given with no '
-                'argument then default out path is used. If flag is omitted, '
-                'then write text output to STDOUT.')
-    parser.add_argument('-e', '--excel', help=out_help, nargs='?', const=0)
+    file_help = (
+        "Path to source XLSForm. Two must be supplied. The first is "
+        "treated as the base, the second is treated as the new file."
+    )
+    parser.add_argument("xlsxfile", help=file_help, nargs=2)
+    reverse_help = "Reverse the base file and the new file for processing."
+    parser.add_argument("-r", "--reverse", action="store_true", help=reverse_help)
+    simple_help = "Do a simple diff instead of the default ODK diff."
+    parser.add_argument("-s", "--simple", action="store_true", help=simple_help)
+    out_help = (
+        "Path to write Excel output. If flag is given with no "
+        "argument then default out path is used. If flag is omitted, "
+        "then write text output to STDOUT."
+    )
+    parser.add_argument("-e", "--excel", help=out_help, nargs="?", const=0)
     args = parser.parse_args()
     file1, file2 = args.xlsxfile
     if args.reverse:
@@ -427,9 +454,9 @@ def xlsdiff_cli():
         diff.write_diff(args.excel)
     else:
         filename, extension = os.path.splitext(file2)
-        outpath = os.path.join(filename+'-diff'+extension)
+        outpath = os.path.join(filename + "-diff" + extension)
         diff.write_diff(outpath)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     xlsdiff_cli()

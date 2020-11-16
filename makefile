@@ -4,31 +4,35 @@ TEST=./tests/
 
 .PHONY: style style_all lint lint_src lint_test codestyle codestyle_src \
 codestyle_test docstyle docstyle_src docstyle_test test clean build pypi \
-pypi_test pip_no_cache help
+pypi_test pip_no_cache help black
 
 
 help:
-	@echo " make style          # Check style of source with linters"
-	@echo " make style_all      # Check style of source and test with linters"
+	@echo " make style           # Check style of source with linters"
+	@echo " make style_all       # Check style of source and test with linters"
 	@echo ""
-	@echo " make lint           # Run pylint on source and test code"
-	@echo " make lint_src       # Run pylint on source code"
-	@echo " make lint_test      # Run pylint on test code"
+	@echo " make lint            # Run pylint on source and test code"
+	@echo " make lint_src        # Run pylint on source code"
+	@echo " make lint_test       # Run pylint on test code"
 	@echo ""
-	@echo " make codestyle      # Run pycodestyle on source and test code"
-	@echo " make codestyle_src  # Run pycodestyle on source code"
-	@echo " make codestyle_test # Run pycodestyle on test code"
+	@echo " make black           # Run Black on source and test code"
+	@echo " make black_src       # Run Black on source code"
+	@echo " make black_test      # Run Black on test code"
 	@echo ""
-	@echo " make docstyle       # Run pycdocstyle on source and test code"
-	@echo " make docstyle_src   # Run pycdocstyle on source code"
-	@echo " make docstyle_test  # Run pycdocstyle on test code"
+	@echo " make codestyle       # Run pycodestyle on source and test code"
+	@echo " make codestyle_src   # Run pycodestyle on source code"
+	@echo " make codestyle_test  # Run pycodestyle on test code"
 	@echo ""
-	@echo " make test           # Run tests"
+	@echo " make docstyle        # Run pycdocstyle on source and test code"
+	@echo " make docstyle_src    # Run pycdocstyle on source code"
+	@echo " make docstyle_test   # Run pycdocstyle on test code"
 	@echo ""
-	@echo " make build          # Create Python sdist and wheel"
-	@echo " make clean          # Remove generated files from a build"
-	@echo " make pypi_test      # Build and push to test PyPI"
-	@echo " make pypi           # Build and push to PyPI"
+	@echo " make test            # Run tests"
+	@echo ""
+	@echo " make build           # Create Python sdist and wheel"
+	@echo " make clean           # Remove generated files from a build"
+	@echo " make pypi_test       # Build and push to test PyPI"
+	@echo " make pypi            # Build and push to PyPI"
 
 
 # Batched Commands
@@ -37,7 +41,7 @@ style_all: lint codestyle docstyle
 
 
 # Pylint Only
-PYLINT_BASE =python3 -m pylint --output-format=colorized --reports=n
+PYLINT_BASE=python3 -m pylint --output-format=colorized --reports=n
 lint: lint_src lint_test
 lint_src:
 	${PYLINT_BASE} ${SRC}
@@ -64,7 +68,7 @@ docstyle_test:
 
 
 # Black
-black: black_src black_all
+black: black_src black_test
 black_src:
 	python3 -m black ${SRC}
 black_test:
